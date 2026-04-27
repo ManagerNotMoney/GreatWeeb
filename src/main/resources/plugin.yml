@@ -1,0 +1,14 @@
+name: GreatWeeb
+version: '${version}'
+main: io.github.potaseval.GreatWeeb
+description: Плагин добавляет выращивание, переработку и употребление конопли двух сортов.
+author: ManagerMoney
+api-version: "1.21.11"
+commands:
+  gw:
+    description: Выдача предметов GreatWeeb
+    usage: /gw <sativa|indica|gash> <предмет>
+permissions:
+  greatweeb.admin:
+    description: Доступ к командам /gw
+    default: op
