@@ -49,7 +49,20 @@ public class JointSmokeListener implements Listener {
         Player player = event.getPlayer();
         ItemStack mainHand = player.getInventory().getItemInMainHand();
         ItemStack offHand = player.getInventory().getItemInOffHand();
-
+        if (medicalItems.isMedicalGum(mainHand)) {
+            smokeEffectManager.stop(player);
+            mainHand.setAmount(mainHand.getAmount() - 1);
+            player.sendMessage("§aВы пожевали жвачку. Запах исчез.");
+            player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_EAT, 1.0f, 1.0f);
+            event.setCancelled(true);
+            return;
+        }
+        if (!plugin.canSmoke(player)) {
+            long remaining = plugin.getSmokeCooldownRemaining(player);
+            player.sendMessage("§cПодождите ещё " + remaining + " сек.");
+            event.setCancelled(true);
+            return;
+        }
         if (gashItems.isGashCake(mainHand)) {
             eatGashCake(player, mainHand);
             event.setCancelled(true);
@@ -112,6 +125,7 @@ public class JointSmokeListener implements Listener {
         }
 
         mainHand.setAmount(mainHand.getAmount() - 1);
+        plugin.setSmokeCooldown(player);
         event.setCancelled(true);
 
         String strainName = isSativaJoint ? "Сативы" : (isIndicaJoint ? "Индики" : "с медицинской травкой");
@@ -123,12 +137,14 @@ public class JointSmokeListener implements Listener {
         item.setAmount(item.getAmount() - 1);
         player.sendMessage("§6Вы съели канна-брауни... что-то будет...");
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_GENERIC_EAT, 1.0f, 1.0f);
+        plugin.setSmokeCooldown(player);
     }
     private void eatTastyCookie(Player player, ItemStack item) {
         delayedEffectManager.schedule(player, "tasty_cookie", smokeEffectManager, 10 * 20);
         item.setAmount(item.getAmount() - 1);
         player.sendMessage("§aВы съели вкусное печенье. Приятного аппетита!");
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_GENERIC_EAT, 1.0f, 1.0f);
+        plugin.setSmokeCooldown(player);
     }
     private void eatGashCake(Player player, ItemStack cake) {
         overdoseListener.registerSmoke(player, "gash");
@@ -137,5 +153,6 @@ public class JointSmokeListener implements Listener {
         cake.setAmount(cake.getAmount() - 1);
         player.sendMessage("§6Вы съели кусок гашишного пирога...");
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_GENERIC_EAT, 1.0f, 1.0f);
+        plugin.setSmokeCooldown(player);
     }
 }

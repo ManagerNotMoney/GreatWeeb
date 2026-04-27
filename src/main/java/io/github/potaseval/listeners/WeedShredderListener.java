@@ -29,7 +29,7 @@ public class WeedShredderListener implements Listener {
         this.indicaItems = plugin.getIndicaItems();
         this.gashItems = plugin.getGashItems();
     }
-
+    // ЧОРНЫЙ ПАПИН ТАНК
     @EventHandler
     public void onRightClick(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
@@ -39,10 +39,12 @@ public class WeedShredderListener implements Listener {
         ItemStack mainHand = player.getInventory().getItemInMainHand();
         ItemStack offHand = player.getInventory().getItemInOffHand();
 
+        boolean isSativaBud = sativaItems.isBud(mainHand);
+        boolean isIndicaBud = indicaItems.isBud(mainHand);
         boolean isSativaBoshka = sativaItems.isBoshka(mainHand);
         boolean isIndicaBoshka = indicaItems.isBoshka(mainHand);
-        if (!isSativaBoshka && !isIndicaBoshka) return;
 
+        if (!isSativaBud && !isIndicaBud && !isSativaBoshka && !isIndicaBoshka) return;
         if (offHand == null || offHand.getType() != Material.SHEARS) return;
 
         ItemMeta meta = offHand.getItemMeta();
@@ -51,21 +53,21 @@ public class WeedShredderListener implements Listener {
         int currentDamage = damageable.getDamage();
         int maxDurability = offHand.getType().getMaxDurability();
         int requiredDamage = 5;
-
         if (currentDamage + requiredDamage > maxDurability) {
             player.sendMessage("§cНожницы слишком изношены для измельчения.");
             return;
         }
 
+        int multiplier = (isSativaBud || isIndicaBud) ? 3 : 2;
         int amount = mainHand.getAmount();
+
         damageable.setDamage(currentDamage + requiredDamage);
         offHand.setItemMeta((ItemMeta) damageable);
 
         mainHand.setAmount(0);
 
-        int totalShredded = amount * 2;
+        int totalShredded = amount * multiplier;
         ItemStack shredded = gashItems.createShreddedWeed();
-
         while (totalShredded > 0) {
             int stackSize = Math.min(totalShredded, 64);
             ItemStack stack = shredded.clone();
@@ -77,7 +79,9 @@ public class WeedShredderListener implements Listener {
         }
 
         player.playSound(player.getLocation(), Sound.ENTITY_SHEEP_SHEAR, 1.0f, 1.0f);
-        player.sendMessage("§aВы измельчили " + amount + " бошек.");
+        player.sendMessage("§aВы измельчили " + amount + " предметов, получив " + amount * multiplier + " измельчённой марихуаны.");
         event.setCancelled(true);
     }
 }
+// извини я наверное поторопился
+// извини меня братан ты не добился

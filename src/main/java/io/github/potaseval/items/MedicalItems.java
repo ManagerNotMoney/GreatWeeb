@@ -70,4 +70,23 @@ public class MedicalItems {
         item.setItemMeta(meta);
         return item;
     }
+    public boolean isMedicalGum(ItemStack item) {
+        return checkType(item, "medical_gum");
+    }
+
+    public ItemStack createMedicalGum() {
+        ItemStack item = new ItemStack(Material.IRON_NUGGET);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(Component.text("Медицинская жвачка")
+                .color(TextColor.color(0x99FF99))
+                .decoration(TextDecoration.ITALIC, false));
+        meta.lore(Arrays.asList(
+                Component.text("Убирает неприятный запах.", TextColor.color(0xAAAAAA))
+        ));
+        var pdc = meta.getPersistentDataContainer();
+        pdc.set(ITEM_TYPE_KEY, PersistentDataType.STRING, "medical_gum");
+        pdc.set(ITEM_ID_KEY, PersistentDataType.INTEGER, 7003);
+        item.setItemMeta(meta);
+        return item;
+    }
 }

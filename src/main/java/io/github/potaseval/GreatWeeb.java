@@ -11,6 +11,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public final class GreatWeeb extends JavaPlugin
         implements Listener {
 
@@ -23,6 +27,7 @@ public final class GreatWeeb extends JavaPlugin
     private SmokeEffectManager smokeEffectManager;
     private DelayedEffectManager delayedEffectManager;
     private MedicalItems medicalItems;
+    private final Map<UUID, Long> smokeCooldowns = new HashMap<>();
 
     @Override
     public void onEnable() {
@@ -71,16 +76,31 @@ public final class GreatWeeb extends JavaPlugin
         Player player = event.getPlayer();
         smokeEffectManager.stop(player);
         overdoseListener.clearPlayerData(player);
-        delayedEffectManager.cancel(player);  // <-- отмена отложенных эффектов
+        delayedEffectManager.cancel(player);
+        smokeCooldowns.remove(player.getUniqueId());
     }
 
     @Override
     public void onDisable() {
         smokeEffectManager.stopAll();
-        delayedEffectManager.cancelAll();     // <-- очистка всех задач
+        delayedEffectManager.cancelAll();
         getLogger().info("GreatWeeb Отключен!");
     }
-
+    public boolean canSmoke(Player player) {
+        Long last = smokeCooldowns.get(player.getUniqueId());
+        if (last == null) return true;
+        return System.currentTimeMillis() - last >= 10_000;
+    }
+    public void setSmokeCooldown(Player player) {
+        smokeCooldowns.put(player.getUniqueId(), System.currentTimeMillis());
+    }
+    public long getSmokeCooldownRemaining(Player player) {
+        Long last = smokeCooldowns.get(player.getUniqueId());
+        if (last == null) return 0;
+        long elapsed = System.currentTimeMillis() - last;
+        if (elapsed >= 10_000) return 0;
+        return (10_000 - elapsed) / 1000;
+    }
     public SativaItems getSativaItems() { return sativaItems; }
     public IndicaItems getIndicaItems() { return indicaItems; }
     public GashItems getGashItems() { return gashItems; }

@@ -39,6 +39,7 @@ public class RecipeManager {
         registerMedicalJointRecipe();
         registerCannaBrownieRecipe();
         registerTastyCookieRecipe();
+        registerMedicalGumRecipe();
     }
 
     private void registerStrainRecipes(StrainItems strain) {
@@ -57,19 +58,24 @@ public class RecipeManager {
         jointRecipe.setIngredient('P', Material.PAPER);
         jointRecipe.setIngredient('B', new RecipeChoice.ExactChoice(strain.createBoshka()));
         plugin.getServer().addRecipe(jointRecipe);
-
+        // рецептик семечек
         NamespacedKey seedKey = new NamespacedKey(plugin, name + "_seed_crafting");
-        ShapedRecipe seedRecipe = new ShapedRecipe(seedKey, strain.createSeed());
-        seedRecipe.shape("BBB", "BMB", "BBB");
-        seedRecipe.setIngredient('B', new RecipeChoice.ExactChoice(strain.createBud()));
-        seedRecipe.setIngredient('M', Material.BONE_MEAL);
+        ShapelessRecipe seedRecipe = new ShapelessRecipe(seedKey, strain.createSeed());
+        RecipeChoice budChoice = new RecipeChoice.ExactChoice(strain.createBud());
+        for (int i = 0; i < 6; i++) {
+            seedRecipe.addIngredient(budChoice); // ненавижу такую хуйню, но так удобнее
+        }
+        seedRecipe.addIngredient(3, Material.BONE_MEAL);
         plugin.getServer().addRecipe(seedRecipe);
 
+        // Рецептик брикетика
         NamespacedKey briquetteKey = new NamespacedKey(plugin, name + "_briquette_crafting");
-        ShapedRecipe briquetteRecipe = new ShapedRecipe(briquetteKey, strain.createBriquette());
-        briquetteRecipe.shape("BBB", "BPB", "BBB");
-        briquetteRecipe.setIngredient('B', new RecipeChoice.ExactChoice(strain.createBoshka()));
-        briquetteRecipe.setIngredient('P', Material.PAPER);
+        ShapelessRecipe briquetteRecipe = new ShapelessRecipe(briquetteKey, strain.createBriquette());
+        RecipeChoice boshkaChoice = new RecipeChoice.ExactChoice(strain.createBoshka());
+        for (int i = 0; i < 8; i++) {
+            briquetteRecipe.addIngredient(boshkaChoice);
+        }
+        briquetteRecipe.addIngredient(Material.PAPER);  // 1 бумага
         plugin.getServer().addRecipe(briquetteRecipe);
 
         NamespacedKey packKey = new NamespacedKey(plugin, name + "_pack_crafting");
@@ -109,7 +115,6 @@ public class RecipeManager {
         spiceRecipe.addIngredient(shredded);
         spiceRecipe.addIngredient(new RecipeChoice.ExactChoice(gash.createGashOil()));
         plugin.getServer().addRecipe(spiceRecipe);
-        plugin.getLogger().info("Рецепт Спайса зарегистрирован.");
     }
     private void registerMedicalJointRecipe() {
         NamespacedKey key = new NamespacedKey(plugin, "medical_joint_crafting");
@@ -149,14 +154,23 @@ public class RecipeManager {
                 300
         );
         plugin.getServer().addRecipe(gashFurnace);
-
+        // Рецептик гашишной вкуснятины
         NamespacedKey cakeKey = new NamespacedKey(plugin, "gash_cake_crafting");
-        ShapedRecipe cakeRecipe = new ShapedRecipe(cakeKey, gash.createGashCake());
-        cakeRecipe.shape("MGM", "PPP");
-        cakeRecipe.setIngredient('M', new RecipeChoice.ExactChoice(gash.createGashOil()));
-        cakeRecipe.setIngredient('G', new RecipeChoice.ExactChoice(gash.createGash()));
-        cakeRecipe.setIngredient('P', Material.WHEAT);
+        ShapelessRecipe cakeRecipe = new ShapelessRecipe(cakeKey, gash.createGashCake());
+        cakeRecipe.addIngredient(new RecipeChoice.ExactChoice(gash.createGashOil()));
+        cakeRecipe.addIngredient(new RecipeChoice.ExactChoice(gash.createGashOil()));
+        cakeRecipe.addIngredient(new RecipeChoice.ExactChoice(gash.createGash()));
+        cakeRecipe.addIngredient(3, Material.WHEAT);
         plugin.getServer().addRecipe(cakeRecipe);
+    }
+    // Рецептик жосткой жвачки
+    private void registerMedicalGumRecipe() {
+        NamespacedKey key = new NamespacedKey(plugin, "medical_gum_crafting");
+        ShapelessRecipe recipe = new ShapelessRecipe(key, medicalItems.createMedicalGum());
+        recipe.addIngredient(new RecipeChoice.ExactChoice(medicalItems.createMedicalBoshka()));
+        recipe.addIngredient(Material.SLIME_BALL);
+        recipe.addIngredient(Material.SUGAR);
+        plugin.getServer().addRecipe(recipe);
     }
     private void registerDryingRackRecipe() {
         NamespacedKey key = new NamespacedKey(plugin, "drying_rack_crafting");
@@ -189,7 +203,8 @@ public class RecipeManager {
         result.setAmount(2);
         ShapelessRecipe recipe = new ShapelessRecipe(key, result);
         recipe.addIngredient(2, Material.WHEAT);
-        recipe.addIngredient(new RecipeChoice.ExactChoice(medicalItems.createMedicalBoshka())); // 1 бошка
+        recipe.addIngredient(1, Material.COCOA_BEANS);
+        recipe.addIngredient(new RecipeChoice.ExactChoice(medicalItems.createMedicalBoshka()));
         plugin.getServer().addRecipe(recipe);
     }
     public interface StrainItems {

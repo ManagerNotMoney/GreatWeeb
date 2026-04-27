@@ -35,6 +35,7 @@ public class PlantCareListener implements Listener {
     private final NamespacedKey FERTILIZED_KEY;
     private final FertilizerItems fertilizerItems;
     private final NamespacedKey DRY_KEY;
+    private final NamespacedKey MOIST_KEY;
 
     public PlantCareListener(GreatWeeb plugin) {
         this.plugin = plugin;
@@ -45,6 +46,7 @@ public class PlantCareListener implements Listener {
         this.FERTILIZED_KEY = new NamespacedKey(plugin, "fertilized");
         this.fertilizerItems = plugin.getFertilizerItems();
         this.DRY_KEY = new NamespacedKey(plugin, "dry");
+        this.MOIST_KEY = new NamespacedKey(plugin, "moist");
 
     }
 
@@ -69,9 +71,22 @@ public class PlantCareListener implements Listener {
         boolean hasBoneMeal = mainHand != null && mainHand.getType() == Material.BONE_MEAL;
         boolean hasFertilizer = mainHand != null && fertilizerItems.isFertilizer(mainHand);
         boolean dry = isDry(block) && age != maxAge;
+        boolean isIce = mainHand != null &&
+                (mainHand.getType() == Material.ICE || mainHand.getType() == Material.PACKED_ICE || mainHand.getType() == Material.BLUE_ICE);
+        if (isIce && !dry) {
+            if (isMoist(block)) {
+                player.sendMessage("§cЭтот куст уже увлажнён.");
+            } else {
+                setMoist(block, true);
+                mainHand.setAmount(mainHand.getAmount() - 1);
+                player.playSound(player.getLocation(), Sound.BLOCK_GLASS_BREAK, 1.0f, 1.0f);
+                player.sendMessage("§bВы увлажнили куст. Теперь он защищён от засыхания.");
+                event.setCancelled(true);
+            }
+            return;
+        }
 
         if (dry) {
-            // Полив ведром воды
             if (mainHand != null && mainHand.getType() == Material.WATER_BUCKET) {
                 setDry(block, false);
                 mainHand.setAmount(mainHand.getAmount() - 1);
@@ -149,8 +164,12 @@ public class PlantCareListener implements Listener {
         player.sendMessage("§e=== Информация о кусте ===");
         if (age == maxAge) {
             player.sendMessage("§7Статус: §aВыросло");
+        } else if (dry) {
+            player.sendMessage("§7Статус: §cЗасохло");
+        } else if (isMoist(block)) {
+            player.sendMessage("§7Статус: §bУвлажнен");
         } else {
-            player.sendMessage("§7Статус: " + (dry ? "§cЗасохло" : "§aВ норме"));
+            player.sendMessage("§7Статус: §aВ норме");
         }
         player.sendMessage("§7Сорт: " + strainName);
         if (growthPercent == 100) {
@@ -188,7 +207,17 @@ public class PlantCareListener implements Listener {
         if (value) chunkPDC.set(blockKey, PersistentDataType.BOOLEAN, true);
         else chunkPDC.remove(blockKey);
     }
-
+    private boolean isMoist(Block block) {
+        PersistentDataContainer chunkPDC = block.getChunk().getPersistentDataContainer();
+        NamespacedKey blockKey = getBlockKey(block, "moist");
+        return chunkPDC.getOrDefault(blockKey, PersistentDataType.BOOLEAN, false);
+    }
+    private void setMoist(Block block, boolean value) {
+        PersistentDataContainer chunkPDC = block.getChunk().getPersistentDataContainer();
+        NamespacedKey blockKey = getBlockKey(block, "moist");
+        if (value) chunkPDC.set(blockKey, PersistentDataType.BOOLEAN, true);
+        else chunkPDC.remove(blockKey);
+    }
     private StrainType getStrainType(Block block) {
         if (isStrainWheat(block, SATIVA_WHEAT_KEY)) {
             return StrainType.SATIVA;

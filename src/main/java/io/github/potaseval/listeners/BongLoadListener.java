@@ -166,6 +166,9 @@ public class BongLoadListener implements Listener {
             case "spice":
                 toGive = gashItems.createSpice();
                 break;
+            case "medical":
+                toGive = medicalItems.createMedicalBoshka();
+                break;
         }
 
         if (toGive == null) return;

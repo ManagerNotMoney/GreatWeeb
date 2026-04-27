@@ -36,6 +36,7 @@ public class PlantListener implements Listener {
     private final NamespacedKey FERTILIZED_KEY;
     private final Set<Location> activePlants = new HashSet<>();
     public static NamespacedKey DRY_KEY;
+    private final NamespacedKey MOIST_KEY;
 
     public PlantListener(GreatWeeb plugin) {
         this.plugin = plugin;
@@ -45,6 +46,7 @@ public class PlantListener implements Listener {
         this.INDICA_WHEAT_KEY = new NamespacedKey(plugin, "indica_wheat");
         this.FERTILIZED_KEY = new NamespacedKey(plugin, "fertilized");
         DRY_KEY = new NamespacedKey(plugin, "dry");
+        this.MOIST_KEY = new NamespacedKey(plugin, "moist");
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -60,7 +62,11 @@ public class PlantListener implements Listener {
                         continue;
                     }
                     if (!isDry(block) && Math.random() < 0.15) {
-                        setDry(block, true);
+                        if (isMoist(block)) {
+                            setMoist(block, false);   // УВ(Л)АЖЕНИЕ ПРОПАДАЕТ
+                        } else {
+                            setDry(block, true);
+                        }
                     }
                 }
             }
@@ -133,6 +139,7 @@ public class PlantListener implements Listener {
             return;
         }
         setDry(block, false);
+        setMoist(block, false);
         removePlantLocation(block);
         setBlockPDC(block, strain.key, false);
         setFertilized(block, false);
@@ -213,7 +220,17 @@ public class PlantListener implements Listener {
             chunkPDC.remove(blockKey);
         }
     }
+    private boolean isMoist(Block block) {
+        return block.getChunk().getPersistentDataContainer()
+                .getOrDefault(getBlockKey(block, "moist"), PersistentDataType.BOOLEAN, false);
+    }
 
+    private void setMoist(Block block, boolean value) {
+        PersistentDataContainer chunkPDC = block.getChunk().getPersistentDataContainer();
+        NamespacedKey key = getBlockKey(block, "moist");
+        if (value) chunkPDC.set(key, PersistentDataType.BOOLEAN, true);
+        else chunkPDC.remove(key);
+    }
     private boolean isStrainWheat(Block block, NamespacedKey strainKey) {
         PersistentDataContainer chunkPDC = block.getChunk().getPersistentDataContainer();
         NamespacedKey blockKey = getBlockKey(block, strainKey.getKey());

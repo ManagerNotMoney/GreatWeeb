@@ -51,10 +51,14 @@ public class BongSmokeListener implements Listener {
         Player player = event.getPlayer();
         ItemStack mainHand = player.getInventory().getItemInMainHand();
         ItemStack offHand = player.getInventory().getItemInOffHand();
-
-        if (!bongItems.isBong(mainHand)) return;                         // 1. Это не бонг → выход
-
-        if (mainHand.getAmount() != 1) {                                 // 2. Бонгов в руке больше одного
+        if (!bongItems.isBong(mainHand)) return;// проверочка на то бонг ли это (я просто тупой забывая че ето))
+        if (!plugin.canSmoke(player)) {
+            long remaining = plugin.getSmokeCooldownRemaining(player);
+            player.sendMessage("§cПодождите ещё " + remaining + " сек.");
+            event.setCancelled(true);
+            return;
+        }
+        if (mainHand.getAmount() != 1) {
             player.sendMessage("§cБонг должен быть один в руке!");
             event.setCancelled(true);
             return;
@@ -143,9 +147,10 @@ public class BongSmokeListener implements Listener {
         player.playSound(player.getLocation(), Sound.ITEM_BOTTLE_EMPTY, 0.8f, 1.0f);
 
         player.sendMessage("§aВы сделали глубокую затяжку из бонга с " + strainName + "!");
+        plugin.setSmokeCooldown(player);
         event.setCancelled(true);
 
-        // Запах для окружающих
+        // Запашок для окружающих
         for (Player nearby : player.getWorld().getPlayers()) {
             if (nearby.getLocation().distanceSquared(player.getLocation()) <= 60 * 60) {
                 nearby.sendMessage("§7Вы чувствуете запах травки...");
