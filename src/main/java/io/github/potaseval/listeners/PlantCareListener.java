@@ -76,6 +76,7 @@ public class PlantCareListener implements Listener {
         if (isIce && !dry) {
             if (isMoist(block)) {
                 player.sendMessage("§cЭтот куст уже увлажнён.");
+                event.setCancelled(true);   // <-- ДОБАВЛЕНО
             } else {
                 setMoist(block, true);
                 mainHand.setAmount(mainHand.getAmount() - 1);
@@ -104,13 +105,14 @@ public class PlantCareListener implements Listener {
         if (hasFertilizer) {
             if (age != 0) {
                 player.sendMessage("§cУдобрять можно только только что посаженные кусты.");
+                event.setCancelled(true);
                 return;
             }
             if (isFertilized(block)) {
                 player.sendMessage("§cЭтот куст уже удобрен.");
+                event.setCancelled(true);
                 return;
             }
-
             setFertilized(block, true);
             mainHand.setAmount(mainHand.getAmount() - 1);
             event.setCancelled(true);

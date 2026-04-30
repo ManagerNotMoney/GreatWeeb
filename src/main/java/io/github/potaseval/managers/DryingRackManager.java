@@ -76,6 +76,11 @@ public class DryingRackManager {
             Location loc = entry.getKey();
             DryingData data = entry.getValue();
 
+            World world = loc.getWorld();
+
+            if (!world.isChunkLoaded(loc.getBlockX() >> 4, loc.getBlockZ() >> 4)) {
+                continue;
+            }
             if (loc.getBlock().getType() != Material.BARREL) {
                 it.remove();
                 continue;
@@ -89,7 +94,6 @@ public class DryingRackManager {
                 continue;
             }
 
-            // --- Соцветия -> бошка ---
             boolean isBud = sativaItems.isBud(input) || indicaItems.isBud(input);
             if (isBud) {
                 data.progressTicks += PROGRESS_PER_STEP;
@@ -103,13 +107,12 @@ public class DryingRackManager {
                     ItemStack boshka = sativaItems.isBud(bud)
                             ? sativaItems.createBoshka()
                             : indicaItems.createBoshka();
-                    outputItem(inv, 3, loc, boshka);   // слот 3 — основная выдача
+                    outputItem(inv, 3, loc, boshka);
                 }
                 updateProgress(inv, data.progressTicks);
                 continue;
             }
 
-            // --- Бошка -> медицинская бошка ---
             if (sativaItems.isBoshka(input) || indicaItems.isBoshka(input)) {
                 data.progressTicks += PROGRESS_PER_STEP;
                 if (data.progressTicks >= TICKS_NEEDED) {

@@ -11,7 +11,7 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.*;
 
-public class OverdoseListener implements Listener { // интерфейс можно оставить, но слушатель не используется для курения
+public class OverdoseListener implements Listener {
 
     private final SativaItems sativaItems;
     private final IndicaItems indicaItems;
@@ -36,11 +36,15 @@ public class OverdoseListener implements Listener { // интерфейс мож
         this.indicaItems = plugin.getIndicaItems();
     }
 
+    private void resetPlayerData(UUID playerId) {
+        smokeHistory.remove(playerId);
+        lastStrain.remove(playerId);
+        wasOverdosed.remove(playerId);
+        // Здесь можно будет добавить новые поля в будущем
+    }
+
     public void clearPlayerData(Player player) {
-        UUID uuid = player.getUniqueId();
-        smokeHistory.remove(uuid);
-        lastStrain.remove(uuid);
-        wasOverdosed.remove(uuid);
+        resetPlayerData(player.getUniqueId());
     }
 
     public void registerSmoke(Player player, String currentStrain) {
@@ -48,6 +52,11 @@ public class OverdoseListener implements Listener { // интерфейс мож
         long now = System.currentTimeMillis();
         List<Long> timestamps = smokeHistory.computeIfAbsent(playerId, k -> new ArrayList<>());
         timestamps.removeIf(time -> now - time > 90_000);
+
+        if (timestamps.isEmpty()) {
+            lastStrain.remove(playerId);
+        }
+
         timestamps.add(now);
 
         String previous = lastStrain.get(playerId);
@@ -65,8 +74,7 @@ public class OverdoseListener implements Listener { // интерфейс мож
         if (overdoseCondition) {
             applyOverdose(player, currentStrain);
             if (!alreadyOverdosed) {
-                smokeHistory.remove(playerId);
-                lastStrain.remove(playerId);
+                resetPlayerData(playerId);
                 wasOverdosed.put(playerId, true);
             } else {
                 player.sendMessage("§cМне становится ещё хуже...");
@@ -78,7 +86,6 @@ public class OverdoseListener implements Listener { // интерфейс мож
             }
         }
     }
-
     private void applyOverdose(Player player, String strain) {
         player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 30 * 20, 2));
         player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 15 * 20, 0));

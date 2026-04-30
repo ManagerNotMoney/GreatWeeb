@@ -33,10 +33,11 @@ public class PlantListener implements Listener {
     private final IndicaItems indicaItems;
     private final NamespacedKey SATIVA_WHEAT_KEY;
     private final NamespacedKey INDICA_WHEAT_KEY;
-    private final NamespacedKey FERTILIZED_KEY;
     private final Set<Location> activePlants = new HashSet<>();
     public static NamespacedKey DRY_KEY;
     private final NamespacedKey MOIST_KEY;
+    private final NamespacedKey FERTILIZED_KEY;
+    private static final String PLANT_KEY_PREFIX = "plant_";
 
     public PlantListener(GreatWeeb plugin) {
         this.plugin = plugin;
@@ -44,9 +45,11 @@ public class PlantListener implements Listener {
         this.indicaItems = plugin.getIndicaItems();
         this.SATIVA_WHEAT_KEY = new NamespacedKey(plugin, "sativa_wheat");
         this.INDICA_WHEAT_KEY = new NamespacedKey(plugin, "indica_wheat");
-        this.FERTILIZED_KEY = new NamespacedKey(plugin, "fertilized");
         DRY_KEY = new NamespacedKey(plugin, "dry");
         this.MOIST_KEY = new NamespacedKey(plugin, "moist");
+        this.FERTILIZED_KEY = new NamespacedKey(plugin, "fertilized");
+
+        // Таймер засыхания
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -54,16 +57,18 @@ public class PlantListener implements Listener {
                     Block block = loc.getBlock();
                     if (block.getType() != Material.WHEAT) {
                         activePlants.remove(loc);
+                        removePlantFromPDC(block); // на всякий случай чистим PDC
                         continue;
                     }
                     StrainInfo strain = getStrainInfo(block);
                     if (strain == null) {
                         activePlants.remove(loc);
+                        removePlantFromPDC(block);
                         continue;
                     }
                     if (!isDry(block) && Math.random() < 0.15) {
                         if (isMoist(block)) {
-                            setMoist(block, false);   // УВ(Л)АЖЕНИЕ ПРОПАДАЕТ
+                            setMoist(block, false);
                         } else {
                             setDry(block, true);
                         }
@@ -72,21 +77,120 @@ public class PlantListener implements Listener {
             }
         }.runTaskTimer(plugin, 0L, 1600L);
     }
+
+    // === Работа с PDC чанка ===
+    private void addPlantToPDC(Block block, StrainType strainType) {
+        PersistentDataContainer chunkPDC = block.getChunk().getPersistentDataContainer();
+        NamespacedKey key = getPlantKey(block);
+        chunkPDC.set(key, PersistentDataType.STRING, strainType.name());
+    }
+
+    private void removePlantFromPDC(Block block) {
+        PersistentDataContainer chunkPDC = block.getChunk().getPersistentDataContainer();
+        NamespacedKey key = getPlantKey(block);
+        chunkPDC.remove(key);
+    }
+
+    private NamespacedKey getPlantKey(Block block) {
+        return new NamespacedKey(plugin, PLANT_KEY_PREFIX + block.getX() + "_" + block.getY() + "_" + block.getZ());
+    }
+    private void loadPlantsFromPDC(Chunk chunk) {
+        PersistentDataContainer chunkPDC = chunk.getPersistentDataContainer();
+        for (NamespacedKey key : chunkPDC.getKeys()) {
+            if (key.getKey().startsWith(PLANT_KEY_PREFIX)) {
+                String value = chunkPDC.get(key, PersistentDataType.STRING);
+                if (value == null) continue;
+                String[] parts = key.getKey().substring(PLANT_KEY_PREFIX.length()).split("_");
+                if (parts.length != 3) continue;
+                try {
+                    int x = Integer.parseInt(parts[0]);
+                    int y = Integer.parseInt(parts[1]);
+                    int z = Integer.parseInt(parts[2]);
+
+                    Block block = chunk.getWorld().getBlockAt(x, y, z);
+
+                    if (block.getType() != Material.WHEAT) {
+                        chunkPDC.remove(key);
+                        continue;
+                    }
+                    StrainType type = StrainType.valueOf(value);
+                    StrainInfo info = getStrainInfo(block);
+                    if (info == null || info.type != type) {
+                        chunkPDC.remove(key);
+                        continue;
+                    }
+                    activePlants.add(block.getLocation());
+                } catch (IllegalArgumentException e) {
+                    chunkPDC.remove(key);
+                }
+            }
+        }
+    }
+
     private boolean isDry(Block block) {
         return block.getChunk().getPersistentDataContainer()
                 .getOrDefault(getBlockKey(block, "dry"), PersistentDataType.BOOLEAN, false);
     }
+
     private void setDry(Block block, boolean value) {
         PersistentDataContainer chunkPDC = block.getChunk().getPersistentDataContainer();
         NamespacedKey key = getBlockKey(block, "dry");
         if (value) chunkPDC.set(key, PersistentDataType.BOOLEAN, true);
         else chunkPDC.remove(key);
     }
-    private void addPlantLocation(Block block) {
-        activePlants.add(block.getLocation());
+
+    private boolean isMoist(Block block) {
+        return block.getChunk().getPersistentDataContainer()
+                .getOrDefault(getBlockKey(block, "moist"), PersistentDataType.BOOLEAN, false);
     }
-    private void removePlantLocation(Block block) {
-        activePlants.remove(block.getLocation());
+
+    private void setMoist(Block block, boolean value) {
+        PersistentDataContainer chunkPDC = block.getChunk().getPersistentDataContainer();
+        NamespacedKey key = getBlockKey(block, "moist");
+        if (value) chunkPDC.set(key, PersistentDataType.BOOLEAN, true);
+        else chunkPDC.remove(key);
+    }
+    private boolean isFertilized(Block block) {
+        PersistentDataContainer chunkPDC = block.getChunk().getPersistentDataContainer();
+        NamespacedKey blockKey = getBlockKey(block, "fertilized");
+        return chunkPDC.getOrDefault(blockKey, PersistentDataType.BOOLEAN, false);
+    }
+    private void setFertilized(Block block, boolean value) {
+        PersistentDataContainer chunkPDC = block.getChunk().getPersistentDataContainer();
+        NamespacedKey blockKey = getBlockKey(block, "fertilized");
+        if (value) {
+            chunkPDC.set(blockKey, PersistentDataType.BOOLEAN, true);
+        } else {
+            chunkPDC.remove(blockKey);
+        }
+    }
+    private boolean isStrainWheat(Block block, NamespacedKey strainKey) {
+        PersistentDataContainer chunkPDC = block.getChunk().getPersistentDataContainer();
+        NamespacedKey blockKey = getBlockKey(block, strainKey.getKey());
+        return chunkPDC.getOrDefault(blockKey, PersistentDataType.BOOLEAN, false);
+    }
+
+    private StrainInfo getStrainInfo(Block block) {
+        if (isStrainWheat(block, SATIVA_WHEAT_KEY)) {
+            return new StrainInfo(StrainType.SATIVA, SATIVA_WHEAT_KEY);
+        } else if (isStrainWheat(block, INDICA_WHEAT_KEY)) {
+            return new StrainInfo(StrainType.INDICA, INDICA_WHEAT_KEY);
+        }
+        return null;
+    }
+
+    private void setBlockPDC(Block block, NamespacedKey key, boolean value) {
+        PersistentDataContainer chunkPDC = block.getChunk().getPersistentDataContainer();
+        NamespacedKey blockKey = getBlockKey(block, key.getKey());
+        if (value) {
+            chunkPDC.set(blockKey, PersistentDataType.BOOLEAN, true);
+        } else {
+            chunkPDC.remove(blockKey);
+        }
+    }
+
+    private NamespacedKey getBlockKey(Block block, String prefix) {
+        return new NamespacedKey(plugin, prefix + "_x" + block.getX() + "_y" + block.getY() + "_z" + block.getZ());
     }
 
     @EventHandler
@@ -98,22 +202,19 @@ public class PlantListener implements Listener {
         }
     }
 
-
     @EventHandler
     public void onSeedPlant(BlockPlaceEvent event) {
         ItemStack itemInHand = event.getItemInHand();
         Block block = event.getBlock();
 
         if (sativaItems.isSeed(itemInHand)) {
-            plantStrain(block, SATIVA_WHEAT_KEY);
-            addPlantLocation(block);
+            plantStrain(block, SATIVA_WHEAT_KEY, StrainType.SATIVA);
         } else if (indicaItems.isSeed(itemInHand)) {
-            plantStrain(block, INDICA_WHEAT_KEY);
-            addPlantLocation(block);
+            plantStrain(block, INDICA_WHEAT_KEY, StrainType.INDICA);
         }
     }
 
-    private void plantStrain(Block block, NamespacedKey strainKey) {
+    private void plantStrain(Block block, NamespacedKey strainKey, StrainType type) {
         block.setType(Material.WHEAT);
         Ageable ageable = (Ageable) block.getBlockData();
         ageable.setAge(0);
@@ -122,6 +223,9 @@ public class PlantListener implements Listener {
         block.getState().update(true, true);
         block.getChunk().setForceLoaded(true);
         block.getChunk().setForceLoaded(false);
+
+        activePlants.add(block.getLocation());
+        addPlantToPDC(block, type);
     }
 
     @EventHandler
@@ -132,17 +236,18 @@ public class PlantListener implements Listener {
 
         StrainInfo strain = getStrainInfo(block);
         if (strain == null) {
-
             if (event.getItems().isEmpty()) {
                 dropVanillaWheat(block, blockState);
             }
             return;
         }
+
         setDry(block, false);
         setMoist(block, false);
-        removePlantLocation(block);
+        activePlants.remove(block.getLocation());
+        removePlantFromPDC(block);
         setBlockPDC(block, strain.key, false);
-        setFertilized(block, false);
+        // удобрение и другие PDC не трогаем, они не критичны
         block.getState().update(true, true);
         block.getChunk().setForceLoaded(true);
         block.getChunk().setForceLoaded(false);
@@ -152,7 +257,7 @@ public class PlantListener implements Listener {
         Ageable ageable = (Ageable) blockState.getBlockData();
 
         ItemStack seed = (strain.type == StrainType.SATIVA)
-                ? sativaItems.createSeed()   // после рефакторинга createSeed()
+                ? sativaItems.createSeed()
                 : indicaItems.createSeed();
         block.getWorld().dropItemNaturally(block.getLocation(), seed);
 
@@ -171,31 +276,20 @@ public class PlantListener implements Listener {
             if (above.getType() == Material.WHEAT) {
                 StrainInfo strain = getStrainInfo(above);
                 if (strain != null) {
-                    removePlantLocation(above);
+                    activePlants.remove(above.getLocation());
+                    removePlantFromPDC(above);
                     ItemStack seed = (strain.type == StrainType.SATIVA)
                             ? sativaItems.createSeed()
                             : indicaItems.createSeed();
                     above.getWorld().dropItemNaturally(above.getLocation().add(0.5, 0.5, 0.5), seed);
-                    setBlockPDC(above, strain.key, false);
+                    setBlockPDC(above, strain.key, false); // удаляем ключ сорта
+
+                    setDry(above, false);
+                    setMoist(above, false);
+                    setFertilized(above, false);
                 }
             }
         }
-    }
-
-    private void setFertilized(Block block, boolean value) {
-        PersistentDataContainer chunkPDC = block.getChunk().getPersistentDataContainer();
-        NamespacedKey blockKey = getBlockKey(block, "fertilized");
-        if (value) {
-            chunkPDC.set(blockKey, PersistentDataType.BOOLEAN, true);
-        } else {
-            chunkPDC.remove(blockKey);
-        }
-    }
-
-    private boolean isFertilized(Block block) {
-        PersistentDataContainer chunkPDC = block.getChunk().getPersistentDataContainer();
-        NamespacedKey blockKey = getBlockKey(block, "fertilized");
-        return chunkPDC.getOrDefault(blockKey, PersistentDataType.BOOLEAN, false);
     }
 
     private void dropVanillaWheat(Block block, BlockState blockState) {
@@ -211,62 +305,14 @@ public class PlantListener implements Listener {
         }
     }
 
-    private void setBlockPDC(Block block, NamespacedKey key, boolean value) {
-        PersistentDataContainer chunkPDC = block.getChunk().getPersistentDataContainer();
-        NamespacedKey blockKey = getBlockKey(block, key.getKey());
-        if (value) {
-            chunkPDC.set(blockKey, PersistentDataType.BOOLEAN, true);
-        } else {
-            chunkPDC.remove(blockKey);
-        }
-    }
-    private boolean isMoist(Block block) {
-        return block.getChunk().getPersistentDataContainer()
-                .getOrDefault(getBlockKey(block, "moist"), PersistentDataType.BOOLEAN, false);
-    }
-
-    private void setMoist(Block block, boolean value) {
-        PersistentDataContainer chunkPDC = block.getChunk().getPersistentDataContainer();
-        NamespacedKey key = getBlockKey(block, "moist");
-        if (value) chunkPDC.set(key, PersistentDataType.BOOLEAN, true);
-        else chunkPDC.remove(key);
-    }
-    private boolean isStrainWheat(Block block, NamespacedKey strainKey) {
-        PersistentDataContainer chunkPDC = block.getChunk().getPersistentDataContainer();
-        NamespacedKey blockKey = getBlockKey(block, strainKey.getKey());
-        return chunkPDC.getOrDefault(blockKey, PersistentDataType.BOOLEAN, false);
-    }
-
-    private StrainInfo getStrainInfo(Block block) {
-        if (isStrainWheat(block, SATIVA_WHEAT_KEY)) {
-            return new StrainInfo(StrainType.SATIVA, SATIVA_WHEAT_KEY);
-        } else if (isStrainWheat(block, INDICA_WHEAT_KEY)) {
-            return new StrainInfo(StrainType.INDICA, INDICA_WHEAT_KEY);
-        }
-        return null;
-    }
     @EventHandler
     public void onChunkLoad(ChunkLoadEvent event) {
-        Chunk chunk = event.getChunk();
-        for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) {
-                for (int y = chunk.getWorld().getMinHeight(); y < chunk.getWorld().getMaxHeight(); y++) {
-                    Block block = chunk.getBlock(x, y, z);
-                    if (block.getType() == Material.WHEAT && getStrainInfo(block) != null) {
-                        activePlants.add(block.getLocation());
-                    }
-                }
-            }
-        }
+        loadPlantsFromPDC(event.getChunk());
     }
 
     @EventHandler
     public void onChunkUnload(ChunkUnloadEvent event) {
         activePlants.removeIf(loc -> loc.getChunk().equals(event.getChunk()));
-    }
-
-    private NamespacedKey getBlockKey(Block block, String prefix) {
-        return new NamespacedKey(plugin, prefix + "_x" + block.getX() + "_y" + block.getY() + "_z" + block.getZ());
     }
 
     private enum StrainType { SATIVA, INDICA }

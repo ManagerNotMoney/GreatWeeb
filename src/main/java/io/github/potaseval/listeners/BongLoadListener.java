@@ -49,14 +49,14 @@ public class BongLoadListener implements Listener {
         Player player = event.getPlayer();
         ItemStack mainHand = player.getInventory().getItemInMainHand();
 
-        if (!bongItems.isBong(mainHand)) return;                     // 1. Не бонг → выход
+        if (!bongItems.isBong(mainHand)) return;
 
         ItemStack offHand = player.getInventory().getItemInOffHand();
-        if (offHand != null && offHand.getType() == Material.FLINT_AND_STEEL) {
-            return;   // 2. В левой руке зажигалка – это курение, обработает BongSmokeListener
+        if (offHand.getType() == Material.FLINT_AND_STEEL) {
+            return;
         }
 
-        if (mainHand.getAmount() != 1) {                             // 3. Бонгов в руке больше одного
+        if (mainHand.getAmount() != 1) {
             player.sendMessage("§cБонг должен быть один в руке!");
             event.setCancelled(true);
             return;
@@ -94,7 +94,7 @@ public class BongLoadListener implements Listener {
         String contentDisplay = null;
         String contentId = null;
 
-        if (offHand != null) {
+        if (!offHand.isEmpty()) {
             if (sativaItems.isBoshka(offHand)) {
                 contentDisplay = "Сатива";
                 contentId = "sativa";
@@ -144,8 +144,6 @@ public class BongLoadListener implements Listener {
     }
 
     private void handleUnload(Player player, ItemStack bong, ItemStack offHand) {
-        if (offHand != null && !offHand.getType().isEmpty()) return;
-
         ItemMeta meta = bong.getItemMeta();
         String contentId = meta.getPersistentDataContainer().get(
                 new NamespacedKey(plugin, "bong_content"),
@@ -182,20 +180,17 @@ public class BongLoadListener implements Listener {
         meta.lore(lore);
         bong.setItemMeta(meta);
 
-        if (offHand == null || offHand.getType().isEmpty()) {
-            player.getInventory().setItemInOffHand(toGive);
-            player.sendMessage("§aВы достали " +
-                    PlainTextComponentSerializer.plainText().serialize(toGive.getItemMeta().displayName()) +
-                    " из бонга.");
-            player.playSound(player.getLocation(), Sound.ITEM_BOTTLE_EMPTY, 0.8f, 1.0f);
-        } else {
+        if (!offHand.isEmpty()) {
             player.getInventory().addItem(toGive).forEach((index, leftover) ->
                     player.getWorld().dropItemNaturally(player.getLocation(), leftover)
             );
-            player.sendMessage("§aВы достали " +
-                    PlainTextComponentSerializer.plainText().serialize(toGive.getItemMeta().displayName()) +
-                    " из бонга.");
-            player.playSound(player.getLocation(), Sound.ITEM_BOTTLE_EMPTY, 0.8f, 1.0f);
+        } else {
+            player.getInventory().setItemInOffHand(toGive);
         }
+
+        player.sendMessage("§aВы достали " +
+                PlainTextComponentSerializer.plainText().serialize(toGive.getItemMeta().displayName()) +
+                " из бонга.");
+        player.playSound(player.getLocation(), Sound.ITEM_BOTTLE_EMPTY, 0.8f, 1.0f);
     }
 }
