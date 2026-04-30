@@ -31,16 +31,14 @@ public class GwCommandHandler implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Команда выдачи всех предметов
         if (args.length == 1 && args[0].equalsIgnoreCase("all")) {
             giveAllItems(player);
             return true;
         }
 
-        // --- Новые команды: smell и nosmoke ---
         if (args.length >= 1 && (args[0].equalsIgnoreCase("smell") || args[0].equalsIgnoreCase("nosmoke"))) {
             String sub = args[0].toLowerCase();
-            Player target = player; // по умолчанию на себя
+            Player target = player;
 
             if (args.length >= 2) {
                 target = Bukkit.getPlayer(args[1]);
@@ -53,14 +51,13 @@ public class GwCommandHandler implements CommandExecutor, TabCompleter {
             if (sub.equals("smell")) {
                 plugin.getSmokeEffectManager().stop(target);
                 player.sendMessage("§aЗапах убран" + (target != player ? " у " + target.getName() : "") + ".");
-            } else { // nosmoke
+            } else {
                 plugin.getOverdoseListener().clearPlayerData(target);
                 player.sendMessage("§aИстория курения очищена" + (target != player ? " для " + target.getName() : "") + ".");
             }
             return true;
         }
 
-        // --- Одноаргументные предметы (без подтипов) ---
         if (args.length == 1) {
             String itemName = args[0].toLowerCase();
             ItemStack item = switch (itemName) {
@@ -79,7 +76,6 @@ public class GwCommandHandler implements CommandExecutor, TabCompleter {
                 player.sendMessage("§aВы получили " + item.getItemMeta().displayName() + "!");
                 return true;
             }
-            // Если не распознали, покажем помощь
             player.sendMessage("§eИспользование:");
             player.sendMessage("§7/gw <sativa|indica|gash|medical> <предмет>");
             player.sendMessage("§7/gw <bong|fertilizer|spice|shredded|brownie|cookie|medical_boshka|medical_joint>");
@@ -89,7 +85,6 @@ public class GwCommandHandler implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // --- Двухаргументные команды (требуют <категория> <предмет>) ---
         if (args.length < 2) {
             player.sendMessage("§eИспользование:");
             player.sendMessage("§7/gw <sativa|indica|gash|medical> <предмет>");
@@ -163,7 +158,6 @@ public class GwCommandHandler implements CommandExecutor, TabCompleter {
         var fertilizer = plugin.getFertilizerItems();
         var medical = plugin.getMedicalItems();
 
-        // Сатива
         player.getInventory().addItem(sativa.createSeed());
         player.getInventory().addItem(sativa.createBud());
         player.getInventory().addItem(sativa.createBoshka());
@@ -171,7 +165,6 @@ public class GwCommandHandler implements CommandExecutor, TabCompleter {
         player.getInventory().addItem(sativa.createBriquette());
         player.getInventory().addItem(sativa.createPack());
 
-        // Индика
         player.getInventory().addItem(indica.createSeed());
         player.getInventory().addItem(indica.createBud());
         player.getInventory().addItem(indica.createBoshka());
@@ -179,7 +172,6 @@ public class GwCommandHandler implements CommandExecutor, TabCompleter {
         player.getInventory().addItem(indica.createBriquette());
         player.getInventory().addItem(indica.createPack());
 
-        // Гашиш и производные
         player.getInventory().addItem(gash.createGash());
         player.getInventory().addItem(gash.createGashOil());
         player.getInventory().addItem(gash.createGashCake());
@@ -188,11 +180,9 @@ public class GwCommandHandler implements CommandExecutor, TabCompleter {
         player.getInventory().addItem(gash.createCannaBrownie());
         player.getInventory().addItem(gash.createTastyCookie());
 
-        // Бонг и удобрение
         player.getInventory().addItem(bong.createBong());
         player.getInventory().addItem(fertilizer.createFertilizer());
 
-        // Медицинские предметы
         player.getInventory().addItem(medical.createMedicalBoshka());
         player.getInventory().addItem(medical.createMedicalJoint());
 
@@ -216,7 +206,6 @@ public class GwCommandHandler implements CommandExecutor, TabCompleter {
 
         if (args.length == 2) {
             if (args[0].equalsIgnoreCase("smell") || args[0].equalsIgnoreCase("nosmoke")) {
-                // Автодополнение имён игроков
                 String prefix = args[1].toLowerCase();
                 List<String> names = new ArrayList<>();
                 for (Player p : Bukkit.getOnlinePlayers()) {

@@ -1,8 +1,10 @@
 package io.github.potaseval.listeners;
 
 import io.github.potaseval.GreatWeeb;
+import io.github.potaseval.items.GashItems;
 import io.github.potaseval.items.IndicaItems;
 import io.github.potaseval.items.SativaItems;
+import io.github.potaseval.util.ItemUtils;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -28,11 +30,13 @@ public class BriquetteUseListener implements Listener {
     private final SativaItems sativaItems;
     private final IndicaItems indicaItems;
     private final NamespacedKey BRAND_KEY;
+    private final GashItems gashItems;
 
     public BriquetteUseListener(GreatWeeb plugin) {
         this.plugin = plugin;
         this.sativaItems = plugin.getSativaItems();
         this.indicaItems = plugin.getIndicaItems();
+        this.gashItems = plugin.getGashItems();
         this.BRAND_KEY = new NamespacedKey(plugin, "briquette_brand");
     }
 
@@ -48,8 +52,17 @@ public class BriquetteUseListener implements Listener {
         boolean isSativa = sativaItems.isBriquette(mainHand);
         boolean isIndica = indicaItems.isBriquette(mainHand);
         boolean isBriquette = isSativa || isIndica;
+        boolean isSpiceBriquette = gashItems.isSpiceBriquette(mainHand);
+        boolean isGashBriquette = gashItems.isGashBriquette(mainHand);
+        if (isSpiceBriquette) {
+            isBriquette = true;
+        }
+        if (isGashBriquette) {
+            isBriquette = true;
+        }
 
         if (!isBriquette) return;
+
 
         if (player.isSneaking()) {
             boolean hasRenamedPaper = offHand != null && offHand.getType() == Material.PAPER &&
@@ -66,28 +79,54 @@ public class BriquetteUseListener implements Listener {
             } else {
                 int amountInHand = mainHand.getAmount();
                 mainHand.setAmount(0);
-                ItemStack boshka = isSativa ? sativaItems.createBoshka() : indicaItems.createBoshka();
-                boshka.setAmount(amountInHand * 8);
-                player.getInventory().addItem(boshka).forEach((index, leftover) ->
-                        player.getWorld().dropItemNaturally(player.getLocation(), leftover)
-                );
-                String strainName = isSativa ? "Сативы" : "Индики";
-                player.sendMessage("§aВы разломали " + amountInHand + " брикет(ов) " + strainName + " и получили " + (amountInHand * 8) + " бошек!");
-                event.setCancelled(true);
+
+                ItemStack result;
+                String itemName;
+                if (isSativa) {
+                    result = sativaItems.createBoshka();
+                    itemName = "Сативы";
+                } else if (isIndica) {
+                    result = indicaItems.createBoshka();
+                    itemName = "Индики";
+                } else if (isGashBriquette) {
+                    result = gashItems.createGash();
+                    itemName = "Гашиша";
+                } else {
+                    result = gashItems.createSpice();
+                    itemName = "Спайса";
+                }
+                result.setAmount(amountInHand * 8);
+                ItemUtils.giveOrDrop(player, result);
+                player.sendMessage("§aВы разломали " + amountInHand + " брикет(ов) " + itemName + " и получили " + (amountInHand * 8) + " "
+                        + (isSativa || isIndica ? "бошек" : (isGashBriquette ? "гашиша" : "спайса")) + " " + itemName + "!");
                 return;
             }
         }
-
         mainHand.setAmount(mainHand.getAmount() - 1);
         event.setCancelled(true);
 
-        ItemStack boshka = isSativa ? sativaItems.createBoshka() : indicaItems.createBoshka();
-        boshka.setAmount(8);
-        player.getInventory().addItem(boshka).forEach((index, leftover) ->
+        ItemStack result;
+        String itemName;
+        if (isSativa) {
+            result = sativaItems.createBoshka();
+            itemName = "Сативы";
+        } else if (isIndica) {
+            result = indicaItems.createBoshka();
+            itemName = "Индики";
+        } else if (isGashBriquette) {
+            result = gashItems.createGash();
+            itemName = "Гашиша";
+        } else {
+            result = gashItems.createSpice();
+            itemName = "Спайса";
+        }
+
+        result.setAmount(8);
+        player.getInventory().addItem(result).forEach((index, leftover) ->
                 player.getWorld().dropItemNaturally(player.getLocation(), leftover)
         );
-        String strainName = isSativa ? "Сативы" : "Индики";
-        player.sendMessage("§aВы разломали брикет и получили 8 бошек " + strainName + "!");
+        player.sendMessage("§aВы разломали брикет и получили 8 "
+                + (isSativa || isIndica ? "бошек" : (isGashBriquette ? "гашиша" : "спайса")) + " " + itemName + "!");
     }
 
     private void applyBrand(ItemStack briquette, String brandName) {

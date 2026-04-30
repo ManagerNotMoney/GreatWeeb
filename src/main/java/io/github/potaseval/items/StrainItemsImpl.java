@@ -1,6 +1,7 @@
 package io.github.potaseval.items;
 
 import io.github.potaseval.RecipeManager;
+import io.github.potaseval.util.ItemUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -16,14 +17,13 @@ import java.util.Arrays;
 public class StrainItemsImpl implements RecipeManager.StrainItems {
 
     private final JavaPlugin plugin;
-    private final String strainName;        // "sativa" или "indica"
-    private final String displayNameRu;     // "Сативы", "Индики"
+    private final String strainName;
+    private final String displayNameRu;
     private final TextColor displayColor;
     private final int baseItemId;
 
     private final Material seedMaterial;
     private final Material budMaterial;
-    // Остальные материалы фиксированы, но можно тоже параметризовать
     private static final Material BOSHKA_MATERIAL = Material.GREEN_DYE;
     private static final Material JOINT_MATERIAL = Material.STICK;
     private static final Material BRIQUETTE_MATERIAL = Material.DRIED_KELP;
@@ -46,7 +46,6 @@ public class StrainItemsImpl implements RecipeManager.StrainItems {
         this.ITEM_ID_KEY = new NamespacedKey(plugin, "custom_item_id");
     }
 
-    // ---- Проверки предметов (единые для всех сортов) ----
     public boolean isSeed(ItemStack item) {
         return checkItemType(item, strainName + "_seed");
     }
@@ -72,14 +71,9 @@ public class StrainItemsImpl implements RecipeManager.StrainItems {
     }
 
     private boolean checkItemType(ItemStack item, String expectedType) {
-        if (item == null || item.getType() == Material.AIR) return false;
-        if (!item.hasItemMeta()) return false;
-        String type = item.getItemMeta().getPersistentDataContainer()
-                .get(ITEM_TYPE_KEY, PersistentDataType.STRING);
-        return expectedType.equals(type);
+        return ItemUtils.isCustomItemType(item, ITEM_TYPE_KEY, expectedType);
     }
 
-    // ---- Создание предметов ----
     @Override
     public ItemStack createSeed() {
         return createItem(seedMaterial,

@@ -1,5 +1,6 @@
 package io.github.potaseval.items;
 
+import io.github.potaseval.util.ItemUtils;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -25,18 +26,14 @@ public class FertilizerItems {
     }
 
     public boolean isFertilizer(ItemStack item) {
-        if (item == null || item.getType() == Material.AIR) return false;
-        if (!item.hasItemMeta()) return false;
-        var pdc = item.getItemMeta().getPersistentDataContainer();
-        String type = pdc.get(ITEM_TYPE_KEY, PersistentDataType.STRING);
-        return "fertilizer".equals(type);
+        return ItemUtils.isCustomItemType(item, ITEM_TYPE_KEY, "fertilizer");
     }
 
     public ItemStack createFertilizer() {
         ItemStack item = new ItemStack(Material.BONE_MEAL);
         ItemMeta meta = item.getItemMeta();
         meta.displayName(Component.text("Удобрение")
-                .color(TextColor.color(0x8B4513)) // коричневый
+                .color(TextColor.color(0x8B4513))
                 .decoration(TextDecoration.ITALIC, false));
         meta.lore(Arrays.asList(
                 Component.text("Удобряет кусты мариуханы.", TextColor.color(0xAAAAAA))

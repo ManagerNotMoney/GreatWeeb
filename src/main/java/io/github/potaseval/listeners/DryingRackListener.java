@@ -39,7 +39,7 @@ public class DryingRackListener implements Listener {
         if (!dryingRack.isDryingRack(item)) return;
 
         Block block = event.getBlock();
-        // Бочка — TileState, можем сохранять данные
+
         if (block.getState() instanceof TileState state) {
             state.getPersistentDataContainer().set(RACK_KEY, PersistentDataType.BOOLEAN, true);
             state.update();
@@ -50,7 +50,7 @@ public class DryingRackListener implements Listener {
     @EventHandler
     public void onBreak(BlockBreakEvent event) {
         Block block = event.getBlock();
-        if (block.getType() != Material.BARREL) return;          // <--- БОЧКА
+        if (block.getType() != Material.BARREL) return;
         if (!(block.getState() instanceof TileState state)) return;
         if (!state.getPersistentDataContainer().has(RACK_KEY, PersistentDataType.BOOLEAN)) return;
 
@@ -68,7 +68,7 @@ public class DryingRackListener implements Listener {
         if (event.getHand() != EquipmentSlot.HAND) return;
 
         Block clicked = event.getClickedBlock();
-        if (clicked == null || clicked.getType() != Material.BARREL) return;   // <--- БОЧКА
+        if (clicked == null || clicked.getType() != Material.BARREL) return;
         if (!(clicked.getState() instanceof TileState state)) return;
         if (!state.getPersistentDataContainer().has(RACK_KEY, PersistentDataType.BOOLEAN)) return;
 

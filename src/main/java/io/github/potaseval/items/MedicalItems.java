@@ -1,5 +1,6 @@
 package io.github.potaseval.items;
 
+import io.github.potaseval.util.ItemUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -33,17 +34,14 @@ public class MedicalItems {
     }
 
     private boolean checkType(ItemStack item, String type) {
-        if (item == null || item.getType() == Material.AIR || !item.hasItemMeta()) return false;
-        var pdc = item.getItemMeta().getPersistentDataContainer();
-        String stored = pdc.get(ITEM_TYPE_KEY, PersistentDataType.STRING);
-        return type.equals(stored);
+        return ItemUtils.isCustomItemType(item, ITEM_TYPE_KEY, type);
     }
 
     public ItemStack createMedicalBoshka() {
-        ItemStack item = new ItemStack(Material.GREEN_DYE); // можно другой материал
+        ItemStack item = new ItemStack(Material.GREEN_DYE);
         ItemMeta meta = item.getItemMeta();
         meta.displayName(Component.text("Медицинская бошка")
-                .color(TextColor.color(0x99FF99))  // светло-зелёный
+                .color(TextColor.color(0x99FF99))
                 .decoration(TextDecoration.ITALIC, false));
         meta.lore(Arrays.asList(
                 Component.text("Очищенная и безопасная.", TextColor.color(0xAAAAAA))

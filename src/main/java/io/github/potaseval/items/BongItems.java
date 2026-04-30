@@ -1,5 +1,6 @@
 package io.github.potaseval.items;
 
+import io.github.potaseval.util.ItemUtils;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -26,11 +27,7 @@ public class BongItems {
     }
 
     public boolean isBong(ItemStack item) {
-        if (item == null || item.getType() == Material.AIR) return false;
-        if (!item.hasItemMeta()) return false;
-        var pdc = item.getItemMeta().getPersistentDataContainer();
-        String type = pdc.get(ITEM_TYPE_KEY, PersistentDataType.STRING);
-        return "bong".equals(type);
+        return ItemUtils.isCustomItemType(item, ITEM_TYPE_KEY, "bong");
     }
 
     public ItemStack createBong() {

@@ -49,7 +49,6 @@ public class PlantListener implements Listener {
         this.MOIST_KEY = new NamespacedKey(plugin, "moist");
         this.FERTILIZED_KEY = new NamespacedKey(plugin, "fertilized");
 
-        // Таймер засыхания
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -57,7 +56,7 @@ public class PlantListener implements Listener {
                     Block block = loc.getBlock();
                     if (block.getType() != Material.WHEAT) {
                         activePlants.remove(loc);
-                        removePlantFromPDC(block); // на всякий случай чистим PDC
+                        removePlantFromPDC(block);
                         continue;
                     }
                     StrainInfo strain = getStrainInfo(block);
@@ -247,7 +246,6 @@ public class PlantListener implements Listener {
         activePlants.remove(block.getLocation());
         removePlantFromPDC(block);
         setBlockPDC(block, strain.key, false);
-        // удобрение и другие PDC не трогаем, они не критичны
         block.getState().update(true, true);
         block.getChunk().setForceLoaded(true);
         block.getChunk().setForceLoaded(false);
@@ -282,7 +280,7 @@ public class PlantListener implements Listener {
                             ? sativaItems.createSeed()
                             : indicaItems.createSeed();
                     above.getWorld().dropItemNaturally(above.getLocation().add(0.5, 0.5, 0.5), seed);
-                    setBlockPDC(above, strain.key, false); // удаляем ключ сорта
+                    setBlockPDC(above, strain.key, false);
 
                     setDry(above, false);
                     setMoist(above, false);

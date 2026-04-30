@@ -40,6 +40,10 @@ public class RecipeManager {
         registerCannaBrownieRecipe();
         registerTastyCookieRecipe();
         registerMedicalGumRecipe();
+        registerSpiceBriquetteRecipe();
+        registerSpicePackRecipe();
+        registerGashBriquetteRecipe();
+        registerGashPackRecipe();
     }
 
     private void registerStrainRecipes(StrainItems strain) {
@@ -63,7 +67,7 @@ public class RecipeManager {
         ShapelessRecipe seedRecipe = new ShapelessRecipe(seedKey, strain.createSeed());
         RecipeChoice budChoice = new RecipeChoice.ExactChoice(strain.createBud());
         for (int i = 0; i < 6; i++) {
-            seedRecipe.addIngredient(budChoice); // ненавижу такую хуйню, но так удобнее
+            seedRecipe.addIngredient(budChoice);
         }
         seedRecipe.addIngredient(3, Material.BONE_MEAL);
         plugin.getServer().addRecipe(seedRecipe);
@@ -75,7 +79,7 @@ public class RecipeManager {
         for (int i = 0; i < 8; i++) {
             briquetteRecipe.addIngredient(boshkaChoice);
         }
-        briquetteRecipe.addIngredient(Material.PAPER);  // 1 бумага
+        briquetteRecipe.addIngredient(Material.PAPER);
         plugin.getServer().addRecipe(briquetteRecipe);
 
         NamespacedKey packKey = new NamespacedKey(plugin, name + "_pack_crafting");
@@ -105,6 +109,31 @@ public class RecipeManager {
         recipeBlaze.addIngredient(Material.BLAZE_ROD);
         plugin.getServer().addRecipe(recipeBlaze);
 
+    }
+    private void registerGashBriquetteRecipe() {
+        NamespacedKey key = new NamespacedKey(plugin, "gash_briquette_crafting");
+        ShapelessRecipe recipe = new ShapelessRecipe(key, gash.createGashBriquette());
+        RecipeChoice gashChoice = new RecipeChoice.ExactChoice(gash.createGash());
+        for (int i = 0; i < 8; i++) {
+            recipe.addIngredient(gashChoice);
+        }
+        recipe.addIngredient(Material.PAPER);
+        plugin.getServer().addRecipe(recipe);
+    }
+
+    private void registerGashPackRecipe() {
+        NamespacedKey packKey = new NamespacedKey(plugin, "gash_pack_crafting");
+        ShapedRecipe packRecipe = new ShapedRecipe(packKey, gash.createGashPack());
+        packRecipe.shape("BBB", "BBB", "BBB");
+        packRecipe.setIngredient('B', new RecipeChoice.ExactChoice(gash.createGashBriquette()));
+        plugin.getServer().addRecipe(packRecipe);
+
+        NamespacedKey unpackKey = new NamespacedKey(plugin, "gash_pack_unpacking");
+        ItemStack nineBriquettes = gash.createGashBriquette();
+        nineBriquettes.setAmount(9);
+        ShapelessRecipe unpackRecipe = new ShapelessRecipe(unpackKey, nineBriquettes);
+        unpackRecipe.addIngredient(new RecipeChoice.ExactChoice(gash.createGashPack()));
+        plugin.getServer().addRecipe(unpackRecipe);
     }
     private void registerSpiceRecipe() {
         NamespacedKey spiceKey = new NamespacedKey(plugin, "spice_crafting");
@@ -179,6 +208,31 @@ public class RecipeManager {
         recipe.setIngredient('W', Material.OAK_PLANKS);
         recipe.setIngredient('S', Material.STRING);
         plugin.getServer().addRecipe(recipe);
+    }
+    private void registerSpiceBriquetteRecipe() {
+        NamespacedKey key = new NamespacedKey(plugin, "spice_briquette_crafting");
+        ShapelessRecipe recipe = new ShapelessRecipe(key, gash.createSpiceBriquette());
+        RecipeChoice spiceChoice = new RecipeChoice.ExactChoice(gash.createSpice());
+        for (int i = 0; i < 8; i++) {
+            recipe.addIngredient(spiceChoice);
+        }
+        recipe.addIngredient(Material.PAPER);
+        plugin.getServer().addRecipe(recipe);
+    }
+
+    private void registerSpicePackRecipe() {
+        NamespacedKey packKey = new NamespacedKey(plugin, "spice_pack_crafting");
+        ShapedRecipe packRecipe = new ShapedRecipe(packKey, gash.createSpicePack());
+        packRecipe.shape("BBB", "BBB", "BBB");
+        packRecipe.setIngredient('B', new RecipeChoice.ExactChoice(gash.createSpiceBriquette()));
+        plugin.getServer().addRecipe(packRecipe);
+
+        NamespacedKey unpackKey = new NamespacedKey(plugin, "spice_pack_unpacking");
+        ItemStack nineBriquettes = gash.createSpiceBriquette();
+        nineBriquettes.setAmount(9);
+        ShapelessRecipe unpackRecipe = new ShapelessRecipe(unpackKey, nineBriquettes);
+        unpackRecipe.addIngredient(new RecipeChoice.ExactChoice(gash.createSpicePack()));
+        plugin.getServer().addRecipe(unpackRecipe);
     }
     private void registerFertilizerRecipe() {
         NamespacedKey key = new NamespacedKey(plugin, "fertilizer_crafting");

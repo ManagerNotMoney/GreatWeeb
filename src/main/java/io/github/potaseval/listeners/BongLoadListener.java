@@ -2,6 +2,7 @@ package io.github.potaseval.listeners;
 
 import io.github.potaseval.GreatWeeb;
 import io.github.potaseval.items.*;
+import io.github.potaseval.util.ItemUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -62,7 +63,6 @@ public class BongLoadListener implements Listener {
             return;
         }
 
-        // === Дальше загрузка / разгрузка ===
         ItemMeta meta = mainHand.getItemMeta();
         String contentId = meta.getPersistentDataContainer().get(
                 new NamespacedKey(plugin, "bong_content"),
@@ -181,9 +181,7 @@ public class BongLoadListener implements Listener {
         bong.setItemMeta(meta);
 
         if (!offHand.isEmpty()) {
-            player.getInventory().addItem(toGive).forEach((index, leftover) ->
-                    player.getWorld().dropItemNaturally(player.getLocation(), leftover)
-            );
+            ItemUtils.giveOrDrop(player, toGive);
         } else {
             player.getInventory().setItemInOffHand(toGive);
         }

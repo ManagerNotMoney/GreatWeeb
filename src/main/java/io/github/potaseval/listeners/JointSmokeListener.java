@@ -7,6 +7,7 @@ import io.github.potaseval.items.MedicalItems;
 import io.github.potaseval.items.SativaItems;
 import io.github.potaseval.managers.DelayedEffectManager;
 import io.github.potaseval.managers.SmokeEffectManager;
+import io.github.potaseval.util.ItemUtils;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -84,7 +85,7 @@ public class JointSmokeListener implements Listener {
         boolean isIndicaJoint = indicaItems.isJoint(mainHand);
         boolean isMedicalJoint = medicalItems.isMedicalJoint(mainHand);
 
-        if (!isSativaJoint && !isIndicaJoint && !isMedicalJoint) return; // Теперь пропускаем и медицинский
+        if (!isSativaJoint && !isIndicaJoint && !isMedicalJoint) return;
 
         if (offHand == null || offHand.getType() != Material.FLINT_AND_STEEL) return;
         if (isSativaJoint || isIndicaJoint) {
@@ -95,21 +96,9 @@ public class JointSmokeListener implements Listener {
             }
         }
 
-        if (offHand.getItemMeta() instanceof Damageable damageable) {
-            int currentDamage = damageable.getDamage();
-            int maxDurability = offHand.getType().getMaxDurability();
-            int newDamage = currentDamage + 1;
-            if (newDamage > maxDurability) {
-                offHand.setAmount(0);
-                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0f, 1.0f);
-            } else {
-                damageable.setDamage(newDamage);
-                offHand.setItemMeta((ItemMeta) damageable);
-            }
-        }
+        ItemUtils.damageItem(offHand, 1, player);
 
         Location loc = player.getLocation().add(0, 1.5, 0);
-        // Для медицинского – меньше частиц
         int particleCount = isMedicalJoint ? 4 : 10;
         player.getWorld().spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, loc, particleCount, 0.3, 0.5, 0.3, 0.02);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 0.6f, 0.7f);
@@ -132,7 +121,7 @@ public class JointSmokeListener implements Listener {
         player.sendMessage("§aВы затянулись косяком " + strainName + "...");
     }
     private void eatCannaBrownie(Player player, ItemStack item) {
-        overdoseListener.registerSmoke(player, "brownie");  // риск передозировки
+        overdoseListener.registerSmoke(player, "brownie");
         delayedEffectManager.schedule(player, "brownie", smokeEffectManager, 25 * 20);
         item.setAmount(item.getAmount() - 1);
         player.sendMessage("§6Вы съели канна-брауни... что-то будет...");

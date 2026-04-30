@@ -1,5 +1,6 @@
 package io.github.potaseval.items;
 
+import io.github.potaseval.util.ItemUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -23,15 +24,11 @@ public class DryingRack {
     }
 
     public boolean isDryingRack(ItemStack item) {
-        if (item == null || item.getType() == Material.AIR) return false;
-        if (!item.hasItemMeta()) return false;
-        String type = item.getItemMeta().getPersistentDataContainer()
-                .get(ITEM_TYPE_KEY, PersistentDataType.STRING);
-        return "drying_rack".equals(type);
+        return ItemUtils.isCustomItemType(item, ITEM_TYPE_KEY, "drying_rack");
     }
 
     public ItemStack createDryingRack() {
-        ItemStack item = new ItemStack(Material.BARREL);   // <--- БОЧКА ВМЕСТО ВЕРСТАКА
+        ItemStack item = new ItemStack(Material.BARREL);
         ItemMeta meta = item.getItemMeta();
         meta.displayName(Component.text("Сушка")
                 .color(TextColor.color(0x8B5A2B))

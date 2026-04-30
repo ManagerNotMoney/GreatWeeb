@@ -4,6 +4,7 @@ import io.github.potaseval.*;
 import io.github.potaseval.items.*;
 import io.github.potaseval.managers.DelayedEffectManager;
 import io.github.potaseval.managers.SmokeEffectManager;
+import io.github.potaseval.util.ItemUtils;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
@@ -64,13 +65,12 @@ public class BongSmokeListener implements Listener {
             return;
         }
 
-        if (offHand == null || offHand.getType() != Material.FLINT_AND_STEEL) { // 3. Нет зажигалки → нельзя курить
+        if (offHand == null || offHand.getType() != Material.FLINT_AND_STEEL) {
             player.sendMessage("§cВозьмите зажигалку во вторую руку.");
             event.setCancelled(true);
             return;
         }
 
-        // === Дальше всё как было: загружен ли бонг, износ зажигалки, эффекты, частицы ===
         ItemMeta meta = mainHand.getItemMeta();
         String contentId = meta.getPersistentDataContainer().get(
                 new NamespacedKey(plugin, "bong_content"),
@@ -83,21 +83,8 @@ public class BongSmokeListener implements Listener {
             return;
         }
 
-        // Износ зажигалки
-        if (offHand.getItemMeta() instanceof Damageable damageable) {
-            int currentDamage = damageable.getDamage();
-            int maxDurability = offHand.getType().getMaxDurability();
-            int newDamage = currentDamage + 1;
-            if (newDamage > maxDurability) {
-                offHand.setAmount(0);
-                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0f, 1.0f);
-            } else {
-                damageable.setDamage(newDamage);
-                offHand.setItemMeta((ItemMeta) damageable);
-            }
-        }
+        ItemUtils.damageItem(offHand, 1, player);
 
-        // Определяем название штамма и регистрируем эффект
         String strainName = null;
         switch (contentId) {
             case "sativa":
@@ -126,7 +113,6 @@ public class BongSmokeListener implements Listener {
                 break;
         }
 
-        // Очистка содержимого бонга
         meta.getPersistentDataContainer().remove(new NamespacedKey(plugin, "bong_content"));
         if (meta.hasLore()) {
             var lore = meta.lore();

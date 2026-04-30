@@ -4,6 +4,7 @@ import io.github.potaseval.GreatWeeb;
 import io.github.potaseval.items.FertilizerItems;
 import io.github.potaseval.items.IndicaItems;
 import io.github.potaseval.items.SativaItems;
+import io.github.potaseval.util.ItemUtils;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
@@ -76,7 +77,7 @@ public class PlantCareListener implements Listener {
         if (isIce && !dry) {
             if (isMoist(block)) {
                 player.sendMessage("§cЭтот куст уже увлажнён.");
-                event.setCancelled(true);   // <-- ДОБАВЛЕНО
+                event.setCancelled(true);
             } else {
                 setMoist(block, true);
                 mainHand.setAmount(mainHand.getAmount() - 1);
@@ -91,7 +92,7 @@ public class PlantCareListener implements Listener {
             if (mainHand != null && mainHand.getType() == Material.WATER_BUCKET) {
                 setDry(block, false);
                 mainHand.setAmount(mainHand.getAmount() - 1);
-                player.getInventory().addItem(new ItemStack(Material.BUCKET));
+                ItemUtils.giveOrDrop(player, new ItemStack(Material.BUCKET));
                 player.playSound(player.getLocation(), Sound.ITEM_BUCKET_EMPTY, 1.0f, 1.0f);
                 player.sendMessage("§aВы полили растение.");
                 event.setCancelled(true);
@@ -129,18 +130,7 @@ public class PlantCareListener implements Listener {
             return;
         }
         if (hasShears && age == maxAge) {
-            if (mainHand.getItemMeta() instanceof Damageable damageable) {
-                int currentDamage = damageable.getDamage();
-                int maxDurability = mainHand.getType().getMaxDurability();
-                int newDamage = currentDamage + 3;
-                if (newDamage > maxDurability) {
-                    mainHand.setAmount(0);
-                    player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0f, 1.0f);
-                } else {
-                    damageable.setDamage(newDamage);
-                    mainHand.setItemMeta((ItemMeta) damageable);
-                }
-            }
+            ItemUtils.damageItem(mainHand, 3, player);
 
             int amount = random.nextInt(2) + 2;
             boolean fertilized = isFertilized(block);

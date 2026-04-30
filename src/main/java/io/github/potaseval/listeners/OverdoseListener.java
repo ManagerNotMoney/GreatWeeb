@@ -40,7 +40,6 @@ public class OverdoseListener implements Listener {
         smokeHistory.remove(playerId);
         lastStrain.remove(playerId);
         wasOverdosed.remove(playerId);
-        // Здесь можно будет добавить новые поля в будущем
     }
 
     public void clearPlayerData(Player player) {
@@ -93,7 +92,7 @@ public class OverdoseListener implements Listener {
         player.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 10 * 20, 1));
         player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 20 * 20, 2));
         if ("spice".equals(strain)) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 120 * 20, 1)); // Иссушение II (уровень 1)
+            player.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 120 * 20, 1));
         }
 
         player.sendMessage("§cЧто-то мне совсем не хорошо...");

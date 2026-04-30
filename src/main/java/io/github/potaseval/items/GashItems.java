@@ -1,6 +1,7 @@
 package io.github.potaseval.items;
 
 import io.github.potaseval.RecipeManager;
+import io.github.potaseval.util.ItemUtils;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -18,11 +19,68 @@ public class GashItems implements RecipeManager.StrainItems {
     private final JavaPlugin plugin;
     private final NamespacedKey ITEM_TYPE_KEY;
     private final NamespacedKey ITEM_ID_KEY;
+    private static final int SPICE_BRIQUETTE_ID = 4008;
+    private static final int SPICE_PACK_ID = 4009;
+    private static final int GASH_BRIQUETTE_ID = 4010;
+    private static final int GASH_PACK_ID = 4011;
 
     public GashItems(JavaPlugin plugin) {
         this.plugin = plugin;
         this.ITEM_TYPE_KEY = new NamespacedKey(plugin, "custom_item_type");
         this.ITEM_ID_KEY = new NamespacedKey(plugin, "custom_item_id");
+    }
+    public boolean isGashBriquette(ItemStack item) {
+        if (item == null || item.getType() == Material.AIR || !item.hasItemMeta()) return false;
+        String type = item.getItemMeta().getPersistentDataContainer().get(ITEM_TYPE_KEY, PersistentDataType.STRING);
+        return "gash_briquette".equals(type);
+    }
+
+    public boolean isGashPack(ItemStack item) {
+        if (item == null || item.getType() == Material.AIR || !item.hasItemMeta()) return false;
+        String type = item.getItemMeta().getPersistentDataContainer().get(ITEM_TYPE_KEY, PersistentDataType.STRING);
+        return "gash_pack".equals(type);
+    }
+
+    public ItemStack createGashBriquette() {
+        ItemStack item = new ItemStack(Material.DRIED_KELP);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(Component.text("Брикет гашиша")
+                .color(TextColor.color(0x8B4513))
+                .decoration(TextDecoration.ITALIC, false));
+        meta.lore(Arrays.asList(
+                Component.text("Спрессованный гашиш.", TextColor.color(0xAAAAAA))
+        ));
+        var pdc = meta.getPersistentDataContainer();
+        pdc.set(ITEM_TYPE_KEY, PersistentDataType.STRING, "gash_briquette");
+        pdc.set(ITEM_ID_KEY, PersistentDataType.INTEGER, GASH_BRIQUETTE_ID);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    public ItemStack createGashPack() {
+        ItemStack item = new ItemStack(Material.DRIED_KELP_BLOCK);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(Component.text("Пак гашиша")
+                .color(TextColor.color(0x8B4513))
+                .decoration(TextDecoration.ITALIC, false));
+        meta.lore(Arrays.asList(
+                Component.text("Упакованные брикеты гашиша.", TextColor.color(0xAAAAAA))
+        ));
+        var pdc = meta.getPersistentDataContainer();
+        pdc.set(ITEM_TYPE_KEY, PersistentDataType.STRING, "gash_pack");
+        pdc.set(ITEM_ID_KEY, PersistentDataType.INTEGER, GASH_PACK_ID);
+        item.setItemMeta(meta);
+        return item;
+    }
+    public boolean isSpiceBriquette(ItemStack item) {
+        if (item == null || item.getType() == Material.AIR || !item.hasItemMeta()) return false;
+        String type = item.getItemMeta().getPersistentDataContainer().get(ITEM_TYPE_KEY, PersistentDataType.STRING);
+        return "spice_briquette".equals(type);
+    }
+    public boolean isSpicePack(ItemStack item) {
+        if (item == null || item.getType() == Material.AIR || !item.hasItemMeta()) return false;
+        String type = item.getItemMeta().getPersistentDataContainer().get(ITEM_TYPE_KEY, PersistentDataType.STRING);
+        return "spice_pack".equals(type);
     }
     public boolean isCannaBrownie(ItemStack item) {
         if (item == null || item.getType() == Material.AIR) return false;
@@ -54,11 +112,7 @@ public class GashItems implements RecipeManager.StrainItems {
     }
 
     public boolean isGash(ItemStack item) {
-        if (item == null || item.getType() == Material.AIR) return false;
-        if (!item.hasItemMeta()) return false;
-        var pdc = item.getItemMeta().getPersistentDataContainer();
-        String type = pdc.get(ITEM_TYPE_KEY, PersistentDataType.STRING);
-        return "gash".equals(type);
+        return ItemUtils.isCustomItemType(item, ITEM_TYPE_KEY, "gash");
     }
     public boolean isGashOil(ItemStack item) {
         if (item == null || item.getType() == Material.AIR) return false;
@@ -74,7 +128,36 @@ public class GashItems implements RecipeManager.StrainItems {
         String type = pdc.get(ITEM_TYPE_KEY, PersistentDataType.STRING);
         return "spice".equals(type);
     }
-
+    public ItemStack createSpiceBriquette() {
+        ItemStack item = new ItemStack(Material.DRIED_KELP);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(Component.text("Брикет спайса")
+                .color(TextColor.color(0xFF5555))
+                .decoration(TextDecoration.ITALIC, false));
+        meta.lore(Arrays.asList(
+                Component.text("Спрессованный спайс.", TextColor.color(0xAAAAAA))
+        ));
+        var pdc = meta.getPersistentDataContainer();
+        pdc.set(ITEM_TYPE_KEY, PersistentDataType.STRING, "spice_briquette");
+        pdc.set(ITEM_ID_KEY, PersistentDataType.INTEGER, SPICE_BRIQUETTE_ID);
+        item.setItemMeta(meta);
+        return item;
+    }
+    public ItemStack createSpicePack() {
+        ItemStack item = new ItemStack(Material.DRIED_KELP_BLOCK);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(Component.text("Пак спайса")
+                .color(TextColor.color(0xFF5555))
+                .decoration(TextDecoration.ITALIC, false));
+        meta.lore(Arrays.asList(
+                Component.text("Упакованные брикеты спайса.", TextColor.color(0xAAAAAA))
+        ));
+        var pdc = meta.getPersistentDataContainer();
+        pdc.set(ITEM_TYPE_KEY, PersistentDataType.STRING, "spice_pack");
+        pdc.set(ITEM_ID_KEY, PersistentDataType.INTEGER, SPICE_PACK_ID);
+        item.setItemMeta(meta);
+        return item;
+    }
     public ItemStack createGash() {
         ItemStack item = new ItemStack(Material.BROWN_DYE);
         ItemMeta meta = item.getItemMeta();
@@ -94,7 +177,7 @@ public class GashItems implements RecipeManager.StrainItems {
         ItemStack item = new ItemStack(Material.COOKIE);
         ItemMeta meta = item.getItemMeta();
         meta.displayName(Component.text("Канна-брауни")
-                .color(TextColor.color(0x8B4513))  // коричневый
+                .color(TextColor.color(0x8B4513))
                 .decoration(TextDecoration.ITALIC, false));
         meta.lore(Arrays.asList(
                 Component.text("Шоколадное пирожное с секретом.", TextColor.color(0xAAAAAA))
@@ -109,7 +192,7 @@ public class GashItems implements RecipeManager.StrainItems {
         ItemStack item = new ItemStack(Material.COOKIE);
         ItemMeta meta = item.getItemMeta();
         meta.displayName(Component.text("Вкусное печенье")
-                .color(TextColor.color(0x99FF99))  // светло-зелёный (как medical)
+                .color(TextColor.color(0x99FF99))
                 .decoration(TextDecoration.ITALIC, false));
         meta.lore(Arrays.asList(
                 Component.text("Полезное лакомство с медицинской бошкой.", TextColor.color(0xAAAAAA))
@@ -121,10 +204,10 @@ public class GashItems implements RecipeManager.StrainItems {
         return item;
     }
     public ItemStack createGashOil() {
-        ItemStack item = new ItemStack(Material.RESIN_BRICK); // или Material.HONEYCOMB
+        ItemStack item = new ItemStack(Material.RESIN_BRICK);
         ItemMeta meta = item.getItemMeta();
         meta.displayName(Component.text("Гашишное масло")
-                .color(TextColor.color(0xDAA520)) // Золотисто-коричневый
+                .color(TextColor.color(0xDAA520))
                 .decoration(TextDecoration.ITALIC, false));
         meta.lore(Arrays.asList(
                 Component.text("Концентрированное масло из гашиша.", TextColor.color(0xAAAAAA))
@@ -187,7 +270,7 @@ public class GashItems implements RecipeManager.StrainItems {
 
     @Override
     public ItemStack createSeed() {
-        return null; // Не используется
+        return null;
     }
 
     @Override
@@ -197,7 +280,7 @@ public class GashItems implements RecipeManager.StrainItems {
 
     @Override
     public ItemStack createBoshka() {
-        return null; // Условно
+        return null;
     }
 
     @Override
@@ -212,6 +295,6 @@ public class GashItems implements RecipeManager.StrainItems {
 
     @Override
     public ItemStack createPack() {
-        return null; // Условно
+        return null;
     }
 }
