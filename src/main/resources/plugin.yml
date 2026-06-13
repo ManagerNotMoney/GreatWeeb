@@ -1,5 +1,5 @@
 name: GreatWeeb
-version: '${version}'
+version: "1.0.0"
 main: io.github.potaseval.GreatWeeb
 description: Плагин добавляет выращивание, переработку и употребление конопли двух сортов.
 author: ManagerMoney

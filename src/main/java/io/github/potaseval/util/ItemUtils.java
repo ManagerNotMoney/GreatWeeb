@@ -26,7 +26,7 @@ public final class ItemUtils {
         int currentDamage = damageable.getDamage();
         int newDamage = currentDamage + damage;
 
-        if (newDamage > maxDurability) {
+        if (newDamage >= maxDurability) {
             item.setAmount(0);
             if (player != null) {
                 player.getWorld().playSound(player.getLocation(), org.bukkit.Sound.ENTITY_ITEM_BREAK, 1.0f, 1.0f);

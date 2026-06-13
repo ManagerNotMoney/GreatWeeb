@@ -1,0 +1,29 @@
+package io.github.potaseval.listeners.dryingrack;
+
+import io.github.potaseval.managers.DryingRackManager;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.inventory.Inventory;
+
+public class DryingRackInventoryListener implements Listener {
+
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event) {
+        Inventory inv = event.getInventory();
+
+        if (!(inv.getHolder() instanceof DryingRackManager.DryingHolder)) return;
+
+        // Cancel all interactions by default, then allow only valid slots
+        event.setCancelled(true);
+
+        int slot = event.getRawSlot();
+        // Only allow clicks in the drying rack's own inventory (not player inventory)
+        // and only in slots 1, 3, 4
+        if (slot >= 0 && slot < inv.getSize()) {
+            if (slot == 1 || slot == 3 || slot == 4) {
+                event.setCancelled(false);
+            }
+        }
+    }
+}

@@ -1,6 +1,10 @@
 package io.github.potaseval.managers;
 
+import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -18,7 +22,6 @@ public class DelayedEffectManager {
         UUID uuid = player.getUniqueId();
         cancel(player);
         player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 5 * 20, 0));
-
         BukkitTask task = new BukkitRunnable() {
             @Override
             public void run() {
@@ -29,6 +32,19 @@ public class DelayedEffectManager {
         pendingTasks.put(uuid, task);
     }
 
+    public void schedule(Player player, String strain, JavaPlugin plugin, long delayTicks) {
+        UUID uuid = player.getUniqueId();
+        cancel(player);
+        player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 5 * 20, 0));
+        BukkitTask task = new BukkitRunnable() {
+            @Override
+            public void run() {
+                applyEffects(player, strain, null);
+                pendingTasks.remove(uuid);
+            }
+        }.runTaskLater(plugin, delayTicks);
+        pendingTasks.put(uuid, task);
+    }
     public void cancel(Player player) {
         BukkitTask task = pendingTasks.remove(player.getUniqueId());
         if (task != null) {
@@ -87,6 +103,24 @@ public class DelayedEffectManager {
             case "tasty_cookie" -> {
                 player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 15 * 20, 1));
                 player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 10 * 20, 0));
+            }
+            case "cigarette" -> {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 20 * 20, 0));
+                Location loc = player.getLocation().add(0, 1.5, 0);
+                player.getWorld().spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, loc, 20, 0.5, 0.8, 0.5, 0.05);
+                player.getWorld().spawnParticle(Particle.SMOKE, loc, 30, 0.4, 0.6, 0.4, 0.02);
+                if (smokeManager != null) {
+                    smokeManager.start(player, SmokeEffectManager.GREY_SMOKE);
+                }
+                if (Math.random() < 0.5) {
+                    player.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 10 * 20, 0));
+                    player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PLAYER_BURP, 0.7f, 0.4f);
+                    for (Player nearby : player.getWorld().getPlayers()) {
+                        if (nearby.getLocation().distanceSquared(player.getLocation()) <= 225) {
+                            nearby.sendMessage("§7Кто-то закашлялся...");
+                        }
+                    }
+                }
             }
         }
     }

@@ -16,8 +16,13 @@ public class RecipeManager {
     private final FertilizerItems fertilizer;
     private final DryingRack dryingRack;
     private final MedicalItems medicalItems;
+    private final SekatorItems sekatorItems;
+    private final TobaccoItems tobaccoItems;
 
-    public RecipeManager(JavaPlugin plugin, SativaItems sativa, IndicaItems indica, GashItems gash, BongItems bong,FertilizerItems fertilizer,DryingRack dryingRack,MedicalItems medicalItems ) {
+    public RecipeManager(JavaPlugin plugin, SativaItems sativa, IndicaItems indica, GashItems gash,
+                         BongItems bong, FertilizerItems fertilizer, DryingRack dryingRack,
+                         MedicalItems medicalItems, SekatorItems sekatorItems,
+                         TobaccoItems tobaccoItems) {
         this.plugin = plugin;
         this.sativa = sativa;
         this.indica = indica;
@@ -26,6 +31,8 @@ public class RecipeManager {
         this.fertilizer = fertilizer;
         this.dryingRack = dryingRack;
         this.medicalItems = medicalItems;
+        this.sekatorItems = sekatorItems;
+        this.tobaccoItems = tobaccoItems;
     }
 
     public void registerAll() {
@@ -44,8 +51,37 @@ public class RecipeManager {
         registerSpicePackRecipe();
         registerGashBriquetteRecipe();
         registerGashPackRecipe();
+        registerSekatorRecipe();
+        registerFilterRecipe();
+        registerCigaretteRecipe();
+        registerBoxFertilizerRecipe();
+        registerCigarettePackUnpacking();
+        registerWateringCanRecipe();
+        registerCigaretteBlockRecipe();
     }
-
+    private void registerSekatorRecipe() {
+        NamespacedKey key = new NamespacedKey(plugin, "sekator_crafting");
+        ShapedRecipe recipe = new ShapedRecipe(key, sekatorItems.createSekator());
+        recipe.shape(" N ", "I I", "   ");
+        recipe.setIngredient('N', Material.SHEARS);
+        recipe.setIngredient('I', Material.IRON_INGOT);
+        plugin.getServer().addRecipe(recipe);
+    }
+    private void registerFilterRecipe() {
+        NamespacedKey key = new NamespacedKey(plugin, "filter_crafting");
+        ShapelessRecipe recipe = new ShapelessRecipe(key, tobaccoItems.createFilter());
+        recipe.addIngredient(1, Material.WHITE_WOOL);
+        recipe.addIngredient(2, Material.PAPER);
+        plugin.getServer().addRecipe(recipe);
+    }
+    private void registerCigaretteRecipe() {
+        NamespacedKey key = new NamespacedKey(plugin, "cigarette_crafting");
+        ShapelessRecipe recipe = new ShapelessRecipe(key, tobaccoItems.createCigarette());
+        recipe.addIngredient(new RecipeChoice.ExactChoice(tobaccoItems.createFilter()));
+        recipe.addIngredient(2, Material.PAPER);
+        recipe.addIngredient(new RecipeChoice.ExactChoice(tobaccoItems.createShreddedTobacco()));
+        plugin.getServer().addRecipe(recipe);
+    }
     private void registerStrainRecipes(StrainItems strain) {
         String name = strain.getName();
 
@@ -62,7 +98,6 @@ public class RecipeManager {
         jointRecipe.setIngredient('P', Material.PAPER);
         jointRecipe.setIngredient('B', new RecipeChoice.ExactChoice(strain.createBoshka()));
         plugin.getServer().addRecipe(jointRecipe);
-        // рецептик семечек
         NamespacedKey seedKey = new NamespacedKey(plugin, name + "_seed_crafting");
         ShapelessRecipe seedRecipe = new ShapelessRecipe(seedKey, strain.createSeed());
         RecipeChoice budChoice = new RecipeChoice.ExactChoice(strain.createBud());
@@ -72,7 +107,6 @@ public class RecipeManager {
         seedRecipe.addIngredient(3, Material.BONE_MEAL);
         plugin.getServer().addRecipe(seedRecipe);
 
-        // Рецептик брикетика
         NamespacedKey briquetteKey = new NamespacedKey(plugin, name + "_briquette_crafting");
         ShapelessRecipe briquetteRecipe = new ShapelessRecipe(briquetteKey, strain.createBriquette());
         RecipeChoice boshkaChoice = new RecipeChoice.ExactChoice(strain.createBoshka());
@@ -121,6 +155,17 @@ public class RecipeManager {
         plugin.getServer().addRecipe(recipe);
     }
 
+    private void registerBoxFertilizerRecipe() {
+        NamespacedKey key = new NamespacedKey(plugin, "box_fertilizer_crafting");
+        ShapelessRecipe recipe = new ShapelessRecipe(key, tobaccoItems.createBoxFertilizer());
+        recipe.addIngredient(4, Material.BONE_MEAL);
+        recipe.addIngredient(new RecipeChoice.ExactChoice(gash.createShreddedWeed()));
+        recipe.addIngredient(new RecipeChoice.ExactChoice(tobaccoItems.createTobacco()));
+        recipe.addIngredient(new RecipeChoice.ExactChoice(tobaccoItems.createTobacco()));
+        recipe.addIngredient(new RecipeChoice.ExactChoice(tobaccoItems.createTobacco()));
+        recipe.addIngredient(new RecipeChoice.MaterialChoice(Material.ICE, Material.PACKED_ICE, Material.BLUE_ICE));
+        plugin.getServer().addRecipe(recipe);
+    }
     private void registerGashPackRecipe() {
         NamespacedKey packKey = new NamespacedKey(plugin, "gash_pack_crafting");
         ShapedRecipe packRecipe = new ShapedRecipe(packKey, gash.createGashPack());
@@ -259,6 +304,38 @@ public class RecipeManager {
         recipe.addIngredient(2, Material.WHEAT);
         recipe.addIngredient(1, Material.COCOA_BEANS);
         recipe.addIngredient(new RecipeChoice.ExactChoice(medicalItems.createMedicalBoshka()));
+        plugin.getServer().addRecipe(recipe);
+    }
+    private void registerCigarettePackUnpacking() {
+        NamespacedKey key = new NamespacedKey(plugin, "cigarette_pack_unpacking");
+        ItemStack twentyCigarettes = tobaccoItems.createCigarette();
+        twentyCigarettes.setAmount(20);
+        ShapelessRecipe recipe = new ShapelessRecipe(key, twentyCigarettes);
+        recipe.addIngredient(new RecipeChoice.ExactChoice(tobaccoItems.createCigarettePack()));
+        plugin.getServer().addRecipe(recipe);
+    }
+    private void registerCigaretteBlockRecipe() {
+        // Крафт блока из 9 пачек
+        NamespacedKey key = new NamespacedKey(plugin, "cigarette_block_craft");
+        ShapelessRecipe recipe = new ShapelessRecipe(key, tobaccoItems.createCigaretteBlock());
+        RecipeChoice.ExactChoice packChoice = new RecipeChoice.ExactChoice(tobaccoItems.createCigarettePack());
+        for (int i = 0; i < 9; i++) {
+            recipe.addIngredient(packChoice);
+        }
+        plugin.getServer().addRecipe(recipe);
+        NamespacedKey unpackKey = new NamespacedKey(plugin, "cigarette_block_unpack");
+        ItemStack ninePacks = tobaccoItems.createCigarettePack();
+        ninePacks.setAmount(9);
+        ShapelessRecipe unpackRecipe = new ShapelessRecipe(unpackKey, ninePacks);
+        unpackRecipe.addIngredient(new RecipeChoice.ExactChoice(tobaccoItems.createCigaretteBlock()));
+        plugin.getServer().addRecipe(unpackRecipe);
+    }
+    private void registerWateringCanRecipe() {
+        NamespacedKey key = new NamespacedKey(plugin, "watering_can_crafting");
+        ShapelessRecipe recipe = new ShapelessRecipe(key, sekatorItems.createEmptyWateringCan());
+        recipe.addIngredient(1, Material.BUCKET);
+        recipe.addIngredient(2, Material.IRON_INGOT);
+        recipe.addIngredient(1, Material.STRING);
         plugin.getServer().addRecipe(recipe);
     }
     public interface StrainItems {
