@@ -52,6 +52,7 @@ public class BongSmokeListener implements Listener {
         ItemStack mainHand = player.getInventory().getItemInMainHand();
         ItemStack offHand = player.getInventory().getItemInOffHand();
         if (!bongItems.isBong(mainHand)) return;// проверочка на то бонг ли это (я просто тупой забывая че ето))
+        if (offHand == null || offHand.getType() != Material.FLINT_AND_STEEL) return;
         if (!plugin.canSmoke(player)) {
             long remaining = plugin.getSmokeCooldownRemaining(player);
             player.sendMessage("§cПодождите ещё " + remaining + " сек.");
@@ -60,12 +61,6 @@ public class BongSmokeListener implements Listener {
         }
         if (mainHand.getAmount() != 1) {
             player.sendMessage("§cБонг должен быть один в руке!");
-            event.setCancelled(true);
-            return;
-        }
-
-        if (offHand == null || offHand.getType() != Material.FLINT_AND_STEEL) {
-            player.sendMessage("§cВозьмите зажигалку во вторую руку.");
             event.setCancelled(true);
             return;
         }

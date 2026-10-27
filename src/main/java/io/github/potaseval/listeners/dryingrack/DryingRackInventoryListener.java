@@ -4,10 +4,21 @@ import io.github.potaseval.managers.DryingRackManager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 
 public class DryingRackInventoryListener implements Listener {
-
+    @EventHandler
+    public void onInventoryDrag(InventoryDragEvent event) {
+        if (!(event.getInventory().getHolder() instanceof DryingRackManager.DryingHolder)) return;
+        int size = event.getInventory().getSize();
+        for (int slot : event.getRawSlots()) {
+            if (slot < size && slot != 1 && slot != 3 && slot != 4) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+    }
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         Inventory inv = event.getInventory();

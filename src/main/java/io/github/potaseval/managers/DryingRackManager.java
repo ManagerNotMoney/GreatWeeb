@@ -52,6 +52,14 @@ public class DryingRackManager {
                 tickAll();
             }
         }.runTaskTimer(plugin, 0L, TIMER_INTERVAL);
+
+        // Автосохранение сушилок раз в 5 минут, чтобы не терять данные при краше
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                saveRacks();
+            }
+        }.runTaskTimer(plugin, 6000L, 6000L);
     }
     public void saveRacks() {
         FileConfiguration config = plugin.getConfig();
@@ -265,7 +273,7 @@ public class DryingRackManager {
 
         DryingData() {
             DryingHolder holder = new DryingHolder();
-            this.inventory = Bukkit.createInventory(holder, 9, "Сушка");
+            this.inventory = Bukkit.createInventory(holder, 9, Component.text("Сушка"));
             holder.setInventory(this.inventory);
             decorateInventory();
             updateProgress(inventory, 0);

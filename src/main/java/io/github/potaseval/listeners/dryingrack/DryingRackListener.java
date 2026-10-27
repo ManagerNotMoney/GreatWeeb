@@ -31,7 +31,7 @@ public class DryingRackListener implements Listener {
         this.manager = manager;
         this.RACK_KEY = new NamespacedKey(plugin, "drying_rack");
     }
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
         ItemStack item = event.getItemInHand();
         if (!dryingRack.isDryingRack(item)) return;
@@ -42,7 +42,7 @@ public class DryingRackListener implements Listener {
         }
         manager.placeRack(block.getLocation());
     }
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onBreak(BlockBreakEvent event) {
         Block block = event.getBlock();
         if (block.getType() != Material.BARREL) return;

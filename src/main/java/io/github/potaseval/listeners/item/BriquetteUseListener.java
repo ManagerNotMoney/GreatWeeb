@@ -81,7 +81,9 @@ public class BriquetteUseListener implements Listener {
         if (!isBriquette) return;
         if (player.isSneaking()) {
             boolean hasRenamedPaper = offHand != null && offHand.getType() == Material.PAPER &&
-                    offHand.hasItemMeta() && offHand.getItemMeta().hasDisplayName();
+                    offHand.hasItemMeta() && offHand.getItemMeta().hasDisplayName() &&
+                    !offHand.getItemMeta().getPersistentDataContainer()
+                            .has(new NamespacedKey(plugin, "custom_item_type"), PersistentDataType.STRING);
             if (hasRenamedPaper) {
                 ItemMeta paperMeta = offHand.getItemMeta();
                 String brandName = PlainTextComponentSerializer.plainText().serialize(paperMeta.displayName());

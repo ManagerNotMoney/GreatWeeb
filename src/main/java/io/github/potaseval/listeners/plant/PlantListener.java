@@ -21,6 +21,13 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.entity.ExperienceOrb;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.block.BlockBreakEvent;
+import io.github.potaseval.items.SekatorItems;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
 
 import java.util.HashSet;
 import java.util.Random;
@@ -32,6 +39,7 @@ public class PlantListener implements Listener {
     private final SativaItems sativaItems;
     private final IndicaItems indicaItems;
     private final TobaccoItems tobaccoItems;
+    private final SekatorItems sekatorItems;
 
     private final Set<Location> activePlants = new HashSet<>();
 
@@ -40,6 +48,7 @@ public class PlantListener implements Listener {
         this.sativaItems = plugin.getSativaItems();
         this.indicaItems = plugin.getIndicaItems();
         this.tobaccoItems = plugin.getTobaccoItems();
+        this.sekatorItems = plugin.getSekatorItems();
 
         new BukkitRunnable() {
             @Override
@@ -124,7 +133,7 @@ public class PlantListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onSeedPlant(BlockPlaceEvent event) {
         ItemStack itemInHand = event.getItemInHand();
         Block block = event.getBlock();
@@ -254,7 +263,84 @@ public class PlantListener implements Listener {
             }
         }
     }
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onShearsHarvest(BlockBreakEvent event) {
+        Player player = event.getPlayer();
+        if (player.getGameMode() == GameMode.CREATIVE) return;
 
+        ItemStack tool = player.getInventory().getItemInMainHand();
+        if (tool == null || tool.getType() != Material.SHEARS) return;
+
+        Block block = event.getBlock();
+        Material type = block.getType();
+
+        boolean isPlant = Tag.CROPS.isTagged(type)
+                || type == Material.NETHER_WART
+                || type == Material.SWEET_BERRY_BUSH;
+        if (!isPlant) return;
+
+        // Кастомные сорта обрабатываются в onWheatBreak
+        if (type == Material.WHEAT && PlantDataUtils.getStrainInfo(block) != null) return;
+
+        // Опыт только за созревшее растение
+        if (!(block.getBlockData() instanceof org.bukkit.block.data.Ageable ageable)) return;
+        if (ageable.getAge() < ageable.getMaximumAge()) return;
+
+        java.util.concurrent.ThreadLocalRandom rnd = java.util.concurrent.ThreadLocalRandom.current();
+        int xp = sekatorItems.isSekator(tool)
+                ? rnd.nextInt(3, 5)   // секатор: 3-4 xp
+                : rnd.nextInt(1, 3);  // ножницы: 1-2 xp
+
+        block.getWorld().spawn(block.getLocation().add(0.5, 0.5, 0.5), ExperienceOrb.class,
+                orb -> orb.setExperience(xp));
+    }
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onHoeTill(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+
+        ItemStack tool = event.getItem();
+        if (tool == null || !Tag.ITEMS_HOES.isTagged(tool.getType())) return;
+
+        Block block = event.getClickedBlock();
+        if (block == null) return;
+
+        Material type = block.getType();
+        if (type != Material.GRASS_BLOCK && type != Material.DIRT && type != Material.DIRT_PATH) return;
+
+        // Мотыга вспахивает только если сверху воздух
+        if (!block.getRelative(0, 1, 0).getType().isAir()) return;
+
+        // Событие приходит ДО вспашки, поэтому проверяем результат на следующем тике
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (block.getType() != Material.FARMLAND) return;
+
+            java.util.concurrent.ThreadLocalRandom rnd = java.util.concurrent.ThreadLocalRandom.current();
+            Location dropLoc = block.getLocation().add(0.5, 1.0, 0.5);
+
+            // 0.1% - семена сативы / индики / табака
+            if (rnd.nextDouble() < 0.001) {
+                ItemStack seed;
+                switch (rnd.nextInt(3)) {
+                    case 0 -> seed = sativaItems.createSeed();
+                    case 1 -> seed = indicaItems.createSeed();
+                    default -> seed = tobaccoItems.createSeed();
+                }
+                block.getWorld().dropItemNaturally(dropLoc, seed);
+            }
+
+            // 1% - обычные семена: пшеница / тыква / арбуз / свёкла
+            if (rnd.nextDouble() < 0.01) {
+                Material[] seeds = {
+                        Material.WHEAT_SEEDS,
+                        Material.PUMPKIN_SEEDS,
+                        Material.MELON_SEEDS,
+                        Material.BEETROOT_SEEDS
+                };
+                ItemStack seed = new ItemStack(seeds[rnd.nextInt(seeds.length)]);
+                block.getWorld().dropItemNaturally(dropLoc, seed);
+            }
+        });
+    }
     private void dropVanillaWheat(Block block, BlockState blockState) {
         Ageable ageable = (Ageable) blockState.getBlockData();
         if (ageable.getAge() == ageable.getMaximumAge()) {
@@ -275,6 +361,10 @@ public class PlantListener implements Listener {
 
     @EventHandler
     public void onChunkUnload(ChunkUnloadEvent event) {
-        activePlants.removeIf(loc -> loc.getChunk().equals(event.getChunk()));
+        Chunk chunk = event.getChunk();
+        activePlants.removeIf(loc -> loc.getWorld() != null
+                && loc.getWorld().equals(chunk.getWorld())
+                && (loc.getBlockX() >> 4) == chunk.getX()
+                && (loc.getBlockZ() >> 4) == chunk.getZ());
     }
 }
